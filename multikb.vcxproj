@@ -128,6 +128,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="main.c" />
+    <ClCompile Include="memcheck.c" />
     <ClCompile Include="win32_keyboard.c" />
   </ItemGroup>
   <ItemGroup>

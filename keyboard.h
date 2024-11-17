@@ -8,8 +8,6 @@ extern "C" {
 #include <malloc.h>
 #include <stdio.h>
 
-#include "memcheck.h"
-
 	enum
 	{
 		key_Null = '\0',

@@ -1,10 +1,6 @@
-#include "memcheck.h"
-
 #include "keyboard.h"
 
 #include <stdio.h>
-
-int allocCount = 0;
 
 int main()
 {

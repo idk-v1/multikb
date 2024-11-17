@@ -2,7 +2,7 @@
 extern "C" {
 #endif
 
-#include "memcheck.h"
+//#include "memcheck.h"
 
 #define WIN32_LEAN_AND_MEAN
 #define NO_STRICT
@@ -182,11 +182,9 @@ extern "C" {
 
 		if (key != 0)
 		{
+			if (state != kbMgr->kb[device]->keys[key])
+				printf("Device [%u]: %s %s\n", device, keyNames[key], state ? "Pressed" : "Released");
 			kbMgr->kb[device]->keys[key] = state;
-			printf("Device [%u]: %s %s\n",
-				device,
-				keyNames[key],
-				state ? "Pressed" : "Released");
 		}
 	}
 
