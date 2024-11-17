@@ -5,19 +5,20 @@
 int main()
 {
 	KBManager kbMgr;
-	multiKBSetup(&kbMgr);
+	kbMgr.useToggle = true;
+	multiKB_Setup(&kbMgr);
 
 	bool running = true;
 
 	while (running)
 	{
-		multiKBUpdate(&kbMgr);
+		multiKB_Update(&kbMgr);
 		for (uint32_t i = 0; i < kbMgr.numKB; i++)
-			if (kbMgr.kb[i]->keys[key_Escape])
+			if (multiKB_Key(&kbMgr, i, key_Escape))
 				running = false;
 	}
 
-	multiKBShutdown(&kbMgr);
+	multiKB_Shutdown(&kbMgr);
 
 	return 0;
 }

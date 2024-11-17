@@ -57,6 +57,7 @@ extern "C" {
 		char* name = getDeviceName(hndl);
 		uint32_t index = findDeviceFromName(name, kbMgr);
 
+		// Create new device, couldn't find matching name
 		if (index == -1)
 		{
 			void* ptr = realloc(kbMgr->kb, sizeof(void*) * (kbMgr->numKB + 1));
@@ -65,9 +66,14 @@ extern "C" {
 				kbMgr->kb = ptr;
 
 				kbMgr->kb[kbMgr->numKB] = malloc(sizeof(Keyboard));
-				memset(kbMgr->kb[kbMgr->numKB], 0, sizeof(Keyboard));
-				kbMgr->kb[kbMgr->numKB]->state = 1;
-				kbMgr->kb[kbMgr->numKB]->devName = name;
+				if (kbMgr->kb[kbMgr->numKB])
+				{
+					memset(kbMgr->kb[kbMgr->numKB], 0, sizeof(Keyboard));
+					kbMgr->kb[kbMgr->numKB]->state = 1;
+					kbMgr->kb[kbMgr->numKB]->devName = name;
+				}
+				else
+					free(name);
 
 				void* hndlPtr = realloc(kbMgr->_osInfo->devHndl, sizeof(void*) * (kbMgr->numKB + 1));
 				if (hndlPtr)
@@ -81,9 +87,9 @@ extern "C" {
 					return;
 				}
 			}
-			multiKBShutdown(kbMgr);
+			multiKB_Shutdown(kbMgr);
 		}
-		else
+		else // found matching device name
 		{
 			printf("Readded device [%u]\n", index);
 			kbMgr->_osInfo->devHndl[index] = hndl;
@@ -172,7 +178,7 @@ extern "C" {
 
 	static void parseInput(void* hndl, KBManager* kbMgr)
 	{
-		RAWINPUT data;
+		RAWINPUT data = { 0 };
 		uint32_t size = sizeof(data);
 		GetRawInputData(hndl, RID_INPUT, &data, &size, sizeof(RAWINPUTHEADER));
 
@@ -180,7 +186,7 @@ extern "C" {
 		uint32_t device = deviceIDFromHndl(data.header.hDevice, kbMgr);
 		bool state = (data.data.keyboard.Message == WM_KEYDOWN);
 
-		if (key != 0)
+		if (key != 0 && device != -1)
 		{
 			if (state != kbMgr->kb[device]->keys[key])
 				printf("Device [%u]: %s %s\n", device, keyNames[key], state ? "Pressed" : "Released");
@@ -188,23 +194,23 @@ extern "C" {
 		}
 	}
 
-	static uint64_t __stdcall multiKBProc(void* wnd, uint32_t msg, uint64_t data1, uint64_t data2)
+	static int64_t __stdcall multiKBProc(void* wnd, uint32_t msg, uint64_t data1, int64_t data2)
 	{
-		KBManager* kbMgr = GetWindowLongPtrA(wnd, GWLP_USERDATA);
+		KBManager* kbMgr = (KBManager*)GetWindowLongPtrA(wnd, GWLP_USERDATA);
 		if (kbMgr == NULL)
 			return DefWindowProcA(wnd, msg, data1, data2);
 
 		switch (msg)
 		{
 		case WM_INPUT:
-			parseInput(data2, kbMgr);
+			parseInput((void*)data2, kbMgr);
 			return 0;
 
 		case WM_INPUT_DEVICE_CHANGE:
 			if (data1 == GIDC_ARRIVAL)
-				addDevice(data2, kbMgr);
+				addDevice((void*)data2, kbMgr);
 			else if (data1 == GIDC_REMOVAL)
-				removeDevice(data2, kbMgr);
+				removeDevice((void*)data2, kbMgr);
 
 			return 0;
 
@@ -225,14 +231,17 @@ extern "C" {
 
 		void* wnd = CreateWindowExA(0, "multiKBMsg", "", 0, 0, 0, 0, 0, 0, 0, inst, 0);
 		if (wnd)
-			SetWindowLongPtrA(wnd, GWLP_USERDATA, kbMgr);
+			SetWindowLongPtrA(wnd, GWLP_USERDATA, (LONG_PTR)kbMgr);
 
 		return wnd;
 	}
 
 
-	bool multiKBSetup(KBManager* kbMgr)
+	bool multiKB_Setup(KBManager* kbMgr)
 	{
+		if (!kbMgr)
+			return false;
+
 		kbMgr->kb = NULL;
 		kbMgr->numKB = 0;
 
@@ -244,7 +253,7 @@ extern "C" {
 			kbMgr->_osInfo->msgWindow = hiddenWindow(kbMgr);
 			if (kbMgr->_osInfo->msgWindow)
 			{
-				RAWINPUTDEVICE devType;
+				RAWINPUTDEVICE devType = { 0 };
 				// Generic
 				devType.usUsagePage = 1; 
 				// Keyboard
@@ -254,16 +263,19 @@ extern "C" {
 				devType.hwndTarget = kbMgr->_osInfo->msgWindow;
 
 				if (RegisterRawInputDevices(&devType, 1, sizeof(devType)))
-					return kbMgr;
+					return true;
 			}
 		}
 
-		multiKBShutdown(kbMgr);
-		return NULL;
+		multiKB_Shutdown(kbMgr);
+		return false;
 	}
 
-	void multiKBUpdate(KBManager* kbMgr)
+	void multiKB_Update(KBManager* kbMgr)
 	{
+		if (!kbMgr)
+			return;
+
 		MSG msg;
 		while (PeekMessageA(&msg, kbMgr->_osInfo->msgWindow, 0, 0, PM_REMOVE))
 		{
@@ -272,8 +284,11 @@ extern "C" {
 		}
 	}
 
-	void multiKBShutdown(KBManager* kbMgr)
+	void multiKB_Shutdown(KBManager* kbMgr)
 	{
+		if (!kbMgr)
+			return;
+
 		if (kbMgr->_osInfo)
 		{
 			if (kbMgr->_osInfo->msgWindow)
@@ -289,9 +304,12 @@ extern "C" {
 		{
 			for (uint32_t i = 0; i < kbMgr->numKB; i++)
 			{
-				if (kbMgr->kb[i]->devName)
-					free(kbMgr->kb[i]->devName);
-				free(kbMgr->kb[i]);
+				if (kbMgr->kb[i])
+				{
+					if (kbMgr->kb[i]->devName)
+						free(kbMgr->kb[i]->devName);
+					free(kbMgr->kb[i]);
+				}
 			}
 			free(kbMgr->kb);
 		}

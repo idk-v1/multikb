@@ -251,16 +251,50 @@ extern "C" {
 
 	typedef struct
 	{
+		// Keyboard take up a decent amount of memory, 
+		// and have no reason to be allocated contiguously.
+		// I know that modern PCs have enough memory to hold 
+		// 128 * (number of keyboards) bytes contiguously,
+		// but this was my reasoning for an array of pointers 
+		// instead of an array of keyboards.
 		Keyboard** kb;
 		uint32_t numKB;
 		_OSKBInfo* _osInfo;
+		bool useToggle;
 	} KBManager;
 
-	bool multiKBSetup(KBManager* kbMgr);
+	/*
+		Keyboard Manager
+			Array of Pointers to a Keyboard
+			Number of Keyboards
+			OS Specific info, like handles
+			Treats keys like capslock or numlock as toggles 
+			instead of pressed or released
+	*/
 
-	void multiKBUpdate(KBManager* kbMgr);
+	bool multiKB_Setup(KBManager* kbMgr);
 
-	void multiKBShutdown(KBManager* kbMgr);
+	void multiKB_Update(KBManager* kbMgr);
+
+	void multiKB_Shutdown(KBManager* kbMgr);
+
+	inline bool multiKB_Key(KBManager* kbMgr, uint32_t index, uint32_t key)
+	{
+		if (kbMgr)
+			if (index < kbMgr->numKB)
+				if (key < key_Count)
+					return kbMgr->kb[index]->keys[key] & 1;
+		return false;
+	}
+
+	inline bool multiKB_KeyLast(KBManager* kbMgr, uint32_t index, uint32_t key)
+	{
+		if (kbMgr)
+			if (index < kbMgr->numKB)
+				if (key < key_Count)
+					return kbMgr->kb[index]->keys[key] & 2;
+		return false;
+	}
 
 #ifdef __cplusplus
 }
