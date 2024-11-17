@@ -20,6 +20,30 @@ extern "C" {
 		void** devHndl;
 	};
 
+	static char* getDeviceName(void* hndl)
+	{
+		uint32_t size = 0;
+		char* name = NULL;
+
+		GetRawInputDeviceInfoA(hndl, RIDI_DEVICENAME, NULL, &size);
+		if (size == 0)
+			return NULL;
+
+		name = malloc(size);
+		GetRawInputDeviceInfoA(hndl, RIDI_DEVICENAME, name, &size);
+		return name;
+	}
+
+	static uint32_t findDeviceFromName(char* name, KBManager* kbMgr)
+	{
+		for (uint32_t i = 0; i < kbMgr->numKB; i++)
+			if (kbMgr->kb[i]->state == 0)
+				if (strcmp(name, kbMgr->kb[i]->devName) == 0)
+					return i;
+
+		return -1;
+	}
+
 	static uint32_t deviceIDFromHndl(void* hndl, KBManager* kbMgr)
 	{
 		for (uint32_t i = 0; i < kbMgr->numKB; i++)
@@ -30,30 +54,42 @@ extern "C" {
 
 	static void addDevice(void* hndl, KBManager* kbMgr)
 	{
-		void* ptr = realloc(kbMgr->kb, sizeof(Keyboard) * (kbMgr->numKB + 1));
-		if (ptr)
+		char* name = getDeviceName(hndl);
+		uint32_t index = findDeviceFromName(name, kbMgr);
+
+		if (index == -1)
 		{
-			void* hndlPtr = realloc(kbMgr->_osInfo->devHndl, sizeof(void*) * (kbMgr->numKB + 1));
-			if (hndlPtr)
+			void* ptr = realloc(kbMgr->kb, sizeof(void*) * (kbMgr->numKB + 1));
+			if (ptr)
 			{
-				printf("Added device [%u]\n", kbMgr->numKB);
-
 				kbMgr->kb = ptr;
-				memset(&kbMgr->kb[kbMgr->numKB], 0, sizeof(Keyboard));
-				kbMgr->kb[kbMgr->numKB].state = 1;
 
-				kbMgr->_osInfo->devHndl = hndlPtr;
-				kbMgr->_osInfo->devHndl[kbMgr->numKB] = hndl;
+				kbMgr->kb[kbMgr->numKB] = malloc(sizeof(Keyboard));
+				memset(kbMgr->kb[kbMgr->numKB], 0, sizeof(Keyboard));
+				kbMgr->kb[kbMgr->numKB]->state = 1;
+				kbMgr->kb[kbMgr->numKB]->devName = name;
 
-				kbMgr->numKB++;
-				return;
+				void* hndlPtr = realloc(kbMgr->_osInfo->devHndl, sizeof(void*) * (kbMgr->numKB + 1));
+				if (hndlPtr)
+				{
+					printf("Added device [%u]\n", kbMgr->numKB);
+
+					kbMgr->_osInfo->devHndl = hndlPtr;
+					kbMgr->_osInfo->devHndl[kbMgr->numKB] = hndl;
+
+					kbMgr->numKB++;
+					return;
+				}
 			}
-			free(kbMgr->_osInfo->devHndl);
-			kbMgr->_osInfo->devHndl = NULL;
+			multiKBShutdown(kbMgr);
 		}
-		free(kbMgr->kb);
-		kbMgr->kb = NULL;
-		kbMgr->numKB = 0;
+		else
+		{
+			printf("Readded device [%u]\n", index);
+			kbMgr->_osInfo->devHndl[index] = hndl;
+			kbMgr->kb[index]->state = 1;
+			free(name);
+		}
 	}
 
 	static void removeDevice(void* hndl, KBManager* kbMgr)
@@ -61,7 +97,8 @@ extern "C" {
 		uint32_t index = deviceIDFromHndl(hndl, kbMgr);
 		if (index != -1)
 		{
-			memset(&kbMgr->kb[index], 0, sizeof(Keyboard));
+			memset(kbMgr->kb[index]->keys, 0, key_Count);
+			kbMgr->kb[index]->state = 0;
 			printf("Removed device [%u]\n", index);
 		}
 	}
@@ -135,30 +172,22 @@ extern "C" {
 
 	static void parseInput(void* hndl, KBManager* kbMgr)
 	{
-		uint32_t size = 0;
-		GetRawInputData(hndl, RID_INPUT, NULL, &size, sizeof(RAWINPUTHEADER));
+		RAWINPUT data;
+		uint32_t size = sizeof(data);
+		GetRawInputData(hndl, RID_INPUT, &data, &size, sizeof(RAWINPUTHEADER));
 
-		uint8_t* data = malloc(size);
-		GetRawInputData(hndl, RID_INPUT, data, &size, sizeof(RAWINPUTHEADER));
+		uint32_t key = keyFromRaw(data.data.keyboard);
+		uint32_t device = deviceIDFromHndl(data.header.hDevice, kbMgr);
+		bool state = (data.data.keyboard.Message == WM_KEYDOWN);
 
-		RAWINPUT* raw = data;
-		if (raw)
+		if (key != 0)
 		{
-			uint32_t key = keyFromRaw(raw->data.keyboard);
-			uint32_t device = deviceIDFromHndl(raw->header.hDevice, kbMgr);
-			bool state = raw->data.keyboard.Message == 256;
-
-			if (key != 0)
-			{
-				kbMgr->kb[device].keys[key] = state;
-				printf("Device [%u]: %s %s\n",
-					device,
-					keyNames[key],
-					state ? "Pressed" : "Released");
-			}
+			kbMgr->kb[device]->keys[key] = state;
+			printf("Device [%u]: %s %s\n",
+				device,
+				keyNames[key],
+				state ? "Pressed" : "Released");
 		}
-
-		free(data);
 	}
 
 	static uint64_t __stdcall multiKBProc(void* wnd, uint32_t msg, uint64_t data1, uint64_t data2)
@@ -204,29 +233,30 @@ extern "C" {
 	}
 
 
-	KBManager* multiKBSetup()
+	bool multiKBSetup(KBManager* kbMgr)
 	{
-		KBManager* kbMgr = malloc(sizeof(KBManager));
-		if (kbMgr)
-		{
-			kbMgr->_osInfo = malloc(sizeof(_OSKBInfo));
-			if (kbMgr->_osInfo)
-			{
-				kbMgr->_osInfo->msgWindow = hiddenWindow(kbMgr);
-				if (kbMgr->_osInfo->msgWindow)
-				{
-					kbMgr->_osInfo->devHndl = NULL;
-					kbMgr->kb = NULL;
-					kbMgr->numKB = 0;
+		kbMgr->kb = NULL;
+		kbMgr->numKB = 0;
 
-					RAWINPUTDEVICE devType;
-					devType.usUsagePage = 1; // Generic
-					devType.usUsage = 6; // Keyboard
-					devType.dwFlags = RIDEV_DEVNOTIFY | RIDEV_EXINPUTSINK;
-					devType.hwndTarget = kbMgr->_osInfo->msgWindow;
-					if (RegisterRawInputDevices(&devType, 1, sizeof(devType)))
-						return kbMgr;
-				}
+		kbMgr->_osInfo = malloc(sizeof(_OSKBInfo));
+		if (kbMgr->_osInfo)
+		{
+			kbMgr->_osInfo->devHndl = NULL;
+
+			kbMgr->_osInfo->msgWindow = hiddenWindow(kbMgr);
+			if (kbMgr->_osInfo->msgWindow)
+			{
+				RAWINPUTDEVICE devType;
+				// Generic
+				devType.usUsagePage = 1; 
+				// Keyboard
+				devType.usUsage = 6; 
+				// device add/remove & messages if any of this program's windows are focused
+				devType.dwFlags = RIDEV_DEVNOTIFY | RIDEV_EXINPUTSINK; 
+				devType.hwndTarget = kbMgr->_osInfo->msgWindow;
+
+				if (RegisterRawInputDevices(&devType, 1, sizeof(devType)))
+					return kbMgr;
 			}
 		}
 
@@ -246,23 +276,30 @@ extern "C" {
 
 	void multiKBShutdown(KBManager* kbMgr)
 	{
-		if (kbMgr)
+		if (kbMgr->_osInfo)
 		{
-			if (kbMgr->_osInfo)
+			if (kbMgr->_osInfo->msgWindow)
 			{
-				if (kbMgr->_osInfo->msgWindow)
-				{
-					DestroyWindow(kbMgr->_osInfo->msgWindow);
-					UnregisterClassA("multiKBMsg", NULL);
-				}
-				if (kbMgr->_osInfo->devHndl)
-					free(kbMgr->_osInfo->devHndl);
-				free(kbMgr->_osInfo);
+				DestroyWindow(kbMgr->_osInfo->msgWindow);
+				UnregisterClassA("multiKBMsg", NULL);
 			}
-			if (kbMgr->kb)
-				free(kbMgr->kb);
-			free(kbMgr);
+			if (kbMgr->_osInfo->devHndl)
+				free(kbMgr->_osInfo->devHndl);
+			free(kbMgr->_osInfo);
 		}
+		if (kbMgr->kb)
+		{
+			for (uint32_t i = 0; i < kbMgr->numKB; i++)
+			{
+				if (kbMgr->kb[i]->devName)
+					free(kbMgr->kb[i]->devName);
+				free(kbMgr->kb[i]);
+			}
+			free(kbMgr->kb);
+		}
+		kbMgr->kb = NULL;
+		kbMgr->_osInfo = NULL;
+		kbMgr->numKB = 0;
 	}
 
 #ifdef __cplusplus

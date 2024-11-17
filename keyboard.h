@@ -244,20 +244,21 @@ extern "C" {
 
 	typedef struct
 	{
-		bool state;
 		bool keys[key_Count];
+		bool state;
+		char* devName;
 	} Keyboard;
 
 	typedef struct _OSKBInfo _OSKBInfo;
 
 	typedef struct
 	{
-		Keyboard* kb;
+		Keyboard** kb;
 		uint32_t numKB;
 		_OSKBInfo* _osInfo;
 	} KBManager;
 
-	KBManager* multiKBSetup();
+	bool multiKBSetup(KBManager* kbMgr);
 
 	void multiKBUpdate(KBManager* kbMgr);
 
