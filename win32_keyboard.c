@@ -189,6 +189,11 @@ extern "C" {
 
 		bool state = (data.data.keyboard.Message == WM_KEYDOWN);
 
+		if (state != (kbMgr->kb[device]->keys[key] & 1))
+			printf("Dev[%u]: %s %s\n", 
+				device, keyNames[key], 
+				state ? "Pressed" : "Released");
+
 		kbMgr->kb[device]->keys[key] &= ~1;
 		kbMgr->kb[device]->keys[key] |= state;
 	}

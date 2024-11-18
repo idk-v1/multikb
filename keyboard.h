@@ -266,6 +266,13 @@ extern "C" {
 	/*
 		Keyboard Manager
 			Array of Pointers to a Keyboard
+				Keys
+					bit 0 - raw state
+					bit 1 - current state
+					bit 2 - last state
+				Is Connected
+				Device Name used for comparing new device 
+				to existing disconnected device
 			Number of Keyboards
 			OS Specific info, like handles
 			Treats keys like capslock or numlock as toggles 
