@@ -184,14 +184,13 @@ extern "C" {
 
 		uint32_t key = keyFromRaw(data.data.keyboard);
 		uint32_t device = deviceIDFromHndl(data.header.hDevice, kbMgr);
+		if (key == 0 || device == -1)
+			return;
+
 		bool state = (data.data.keyboard.Message == WM_KEYDOWN);
 
-		if (key != 0 && device != -1)
-		{
-			if (state != kbMgr->kb[device]->keys[key])
-				printf("Device [%u]: %s %s\n", device, keyNames[key], state ? "Pressed" : "Released");
-			kbMgr->kb[device]->keys[key] = state;
-		}
+		kbMgr->kb[device]->keys[key] &= ~1;
+		kbMgr->kb[device]->keys[key] |= state;
 	}
 
 	static int64_t __stdcall multiKBProc(void* wnd, uint32_t msg, uint64_t data1, int64_t data2)
@@ -281,6 +280,17 @@ extern "C" {
 		{
 			TranslateMessage(&msg);
 			DispatchMessageA(&msg);
+		}
+
+		for (uint32_t dev = 0; dev < kbMgr->numKB; dev++)
+		{
+			for (uint32_t i = key_Control; i < key_Count; i++)
+			{
+				kbMgr->kb[dev]->keys[i] &= ~4;
+				kbMgr->kb[dev]->keys[i] |= (kbMgr->kb[dev]->keys[i] & 2) << 1;
+				kbMgr->kb[dev]->keys[i] &= ~2;
+				kbMgr->kb[dev]->keys[i] |= (kbMgr->kb[dev]->keys[i] & 1) << 1;
+			}
 		}
 	}
 

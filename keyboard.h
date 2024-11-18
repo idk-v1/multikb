@@ -242,7 +242,7 @@ extern "C" {
 
 	typedef struct
 	{
-		bool keys[key_Count];
+		char keys[key_Count];
 		bool state;
 		char* devName;
 	} Keyboard;
@@ -283,7 +283,7 @@ extern "C" {
 		if (kbMgr)
 			if (index < kbMgr->numKB)
 				if (key < key_Count)
-					return kbMgr->kb[index]->keys[key] & 1;
+					return kbMgr->kb[index]->keys[key] & 2 >> 1;
 		return false;
 	}
 
@@ -292,8 +292,18 @@ extern "C" {
 		if (kbMgr)
 			if (index < kbMgr->numKB)
 				if (key < key_Count)
-					return kbMgr->kb[index]->keys[key] & 2;
+					return (kbMgr->kb[index]->keys[key] & 4) >> 2;
 		return false;
+	}
+
+	inline bool multiKB_KeyPress(KBManager* kbMgr, uint32_t index, uint32_t key)
+	{
+		return !multiKB_KeyLast(kbMgr, index, key) && multiKB_Key(kbMgr, index, key);
+	}
+
+	inline bool multiKB_KeyRelease(KBManager* kbMgr, uint32_t index, uint32_t key)
+	{
+		return multiKB_KeyLast(kbMgr, index, key) && !multiKB_Key(kbMgr, index, key);
 	}
 
 #ifdef __cplusplus
