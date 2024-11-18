@@ -5,8 +5,6 @@ extern "C" {
 
 #include <stdint.h>
 #include <stdbool.h>
-#include <malloc.h>
-#include <stdio.h>
 
 	enum
 	{
@@ -260,7 +258,7 @@ extern "C" {
 		Keyboard** kb;
 		uint32_t numKB;
 		_OSKBInfo* _osInfo;
-		bool useToggle;
+		bool useToggle; // On by default | Set after multiKB_Setup() call
 	} KBManager;
 
 	/*
@@ -290,7 +288,7 @@ extern "C" {
 		if (kbMgr)
 			if (index < kbMgr->numKB)
 				if (key < key_Count)
-					return kbMgr->kb[index]->keys[key] & 2 >> 1;
+					return (kbMgr->kb[index]->keys[key] & 2) >> 1;
 		return false;
 	}
 

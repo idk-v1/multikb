@@ -2,8 +2,6 @@
 extern "C" {
 #endif
 
-//#include "memcheck.h"
-
 #define WIN32_LEAN_AND_MEAN
 #define NO_STRICT
 #define NOMINMAX
@@ -11,6 +9,8 @@ extern "C" {
 #include <hidusage.h>
 #include <hidsdi.h>
 #pragma comment(lib, "hid.lib")
+
+#include <malloc.h>
 
 #include "keyboard.h"
 
@@ -78,8 +78,6 @@ extern "C" {
 				void* hndlPtr = realloc(kbMgr->_osInfo->devHndl, sizeof(void*) * (kbMgr->numKB + 1));
 				if (hndlPtr)
 				{
-					printf("Added device [%u]\n", kbMgr->numKB);
-
 					kbMgr->_osInfo->devHndl = hndlPtr;
 					kbMgr->_osInfo->devHndl[kbMgr->numKB] = hndl;
 
@@ -91,7 +89,6 @@ extern "C" {
 		}
 		else // found matching device name
 		{
-			printf("Readded device [%u]\n", index);
 			kbMgr->_osInfo->devHndl[index] = hndl;
 			kbMgr->kb[index]->state = 1;
 			free(name);
@@ -105,7 +102,6 @@ extern "C" {
 		{
 			memset(kbMgr->kb[index]->keys, 0, key_Count);
 			kbMgr->kb[index]->state = 0;
-			printf("Removed device [%u]\n", index);
 		}
 	}
 
@@ -188,11 +184,12 @@ extern "C" {
 			return;
 
 		bool state = (data.data.keyboard.Message == WM_KEYDOWN);
+		bool lastState = kbMgr->kb[device]->keys[key] & 1;
 
-		if (state != (kbMgr->kb[device]->keys[key] & 1))
-			printf("Dev[%u]: %s %s\n", 
-				device, keyNames[key], 
-				state ? "Pressed" : "Released");
+		if (kbMgr->useToggle)
+			if (key == key_Capslock || key == key_Numlock)
+				if (state && state != lastState)
+					kbMgr->kb[device]->keys[key] ^= 2;
 
 		kbMgr->kb[device]->keys[key] &= ~1;
 		kbMgr->kb[device]->keys[key] |= state;
@@ -246,6 +243,7 @@ extern "C" {
 		if (!kbMgr)
 			return false;
 
+		kbMgr->useToggle = true;
 		kbMgr->kb = NULL;
 		kbMgr->numKB = 0;
 
@@ -280,22 +278,35 @@ extern "C" {
 		if (!kbMgr)
 			return;
 
+		// Update key states
+		for (uint32_t dev = 0; dev < kbMgr->numKB; dev++)
+		{
+			// Toggle keys only update last state
+			for (uint32_t i = key_Capslock; i < key_Control; i++)
+			{
+				kbMgr->kb[dev]->keys[i] &= ~4;
+				kbMgr->kb[dev]->keys[i] |= (kbMgr->kb[dev]->keys[i] & 2) << 1;
+			}
+
+			for (uint32_t i = 0; i < key_Count; i++)
+			{
+				kbMgr->kb[dev]->keys[i] &= ~4;
+				kbMgr->kb[dev]->keys[i] |= (kbMgr->kb[dev]->keys[i] & 2) << 1;
+
+				if (kbMgr->useToggle)
+					if (i == key_Capslock || i == key_Numlock)
+						continue;
+
+				kbMgr->kb[dev]->keys[i] &= ~2;
+				kbMgr->kb[dev]->keys[i] |= (kbMgr->kb[dev]->keys[i] & 1) << 1;
+			}
+		}
+
 		MSG msg;
 		while (PeekMessageA(&msg, kbMgr->_osInfo->msgWindow, 0, 0, PM_REMOVE))
 		{
 			TranslateMessage(&msg);
 			DispatchMessageA(&msg);
-		}
-
-		for (uint32_t dev = 0; dev < kbMgr->numKB; dev++)
-		{
-			for (uint32_t i = key_Control; i < key_Count; i++)
-			{
-				kbMgr->kb[dev]->keys[i] &= ~4;
-				kbMgr->kb[dev]->keys[i] |= (kbMgr->kb[dev]->keys[i] & 2) << 1;
-				kbMgr->kb[dev]->keys[i] &= ~2;
-				kbMgr->kb[dev]->keys[i] |= (kbMgr->kb[dev]->keys[i] & 1) << 1;
-			}
 		}
 	}
 
