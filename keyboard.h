@@ -283,6 +283,13 @@ extern "C" {
 
 	void multiKB_Shutdown(KBManager* kbMgr);
 
+	bool multiKB_IsConnected(KBManager* kbMgr, uint32_t index)
+	{
+		if (kbMgr)
+			if (index < kbMgr->numKB)
+				return kbMgr->kb[index]->state;
+	}
+
 	inline bool multiKB_Key(KBManager* kbMgr, uint32_t index, uint32_t key)
 	{
 		if (kbMgr)
@@ -313,4 +320,20 @@ extern "C" {
 
 #ifdef __cplusplus
 }
+
+struct KBManagerPP
+{
+	KBManager kbMgr;
+
+	KBManagerPP() { multiKB_Setup(&kbMgr); }
+	~KBManagerPP() { multiKB_Shutdown(&kbMgr); }
+	void update() { multiKB_Update(&kbMgr); }
+	bool isConnected(uint32_t index) { multiKB_IsConnected(&kbMgr, index); }
+	uint32_t getNumDevices() { return kbMgr.numKB; }
+	void useToggleKeys(bool value) { kbMgr.useToggle = value; }
+	bool key(uint32_t index, uint32_t key) { return multiKB_Key(&kbMgr, index, key); }
+	bool keyLast(uint32_t index, uint32_t key) { return multiKB_KeyLast(&kbMgr, index, key); }
+	bool keyPress(uint32_t index, uint32_t key) { return multiKB_KeyPress(&kbMgr, index, key); }
+	bool keyRelease(uint32_t index, uint32_t key) { return multiKB_KeyRelease(&kbMgr, index, key); }
+};
 #endif
