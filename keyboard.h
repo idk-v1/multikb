@@ -283,7 +283,7 @@ extern "C" {
 
 	void multiKB_Shutdown(KBManager* kbMgr);
 
-	bool multiKB_IsConnected(KBManager* kbMgr, uint32_t index)
+	inline bool multiKB_IsConnected(KBManager* kbMgr, uint32_t index)
 	{
 		if (kbMgr)
 			if (index < kbMgr->numKB)

@@ -1,6 +1,6 @@
 #include "keyboard.h"
 
-int main()
+int main2()
 {
 	KBManager kbMgr;
 	multiKB_Setup(&kbMgr);

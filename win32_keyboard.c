@@ -11,7 +11,6 @@ extern "C" {
 #pragma comment(lib, "hid.lib")
 
 #include <malloc.h>
-#include <stdio.h>
 
 #include "keyboard.h"
 
@@ -186,8 +185,8 @@ extern "C" {
 		bool state = (data.data.keyboard.Message == WM_KEYDOWN);
 		bool lastState = kbMgr->kb[device]->keys[key] & 1;
 
-		if (state != lastState)
-			printf("Device[%u] %s %s\n", device, keyNames[key], state ? "Pressed" : "Released");
+		//if (state != lastState)
+			//printf("Device[%u] %s %s\n", device, keyNames[key], state ? "Pressed" : "Released");
 
 		if (kbMgr->useToggle)
 			if (key == key_Capslock || key == key_Numlock)
