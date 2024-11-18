@@ -26,4 +26,12 @@ To read the key state without these:<br>
 1st bit - Current State<br>
 2nd bit - Last State<br><br>
 
-Call multiKB_Setup() to release allocated memory when you are done with the program.<br>
+Call multiKB_Setup() to release allocated memory when you are done with the program.<br><br>
+
+## C++ Wrapper:
+create a KBManagerPP class<br>
+update() to check for key state changes<br><br>
+key() gets the current key state<br>
+keyLast() gets the last key state<br>
+keyPress() returns true if the current state is on and the last state was off<br>
+keyRelease() returns true if the current state is off and the last state was on<br><br>
