@@ -168,7 +168,6 @@ extern "C" {
 		case 255: return 0;
 		}
 
-		printf("unknown: %u\n", key.VKey);
 		return 0; // Unnown
 	}
 
