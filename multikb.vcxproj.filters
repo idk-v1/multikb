@@ -21,9 +21,12 @@
     <ClCompile Include="main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="multikb.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="keyboard.h">
+    <ClInclude Include="multikb.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

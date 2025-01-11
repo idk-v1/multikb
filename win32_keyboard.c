@@ -12,7 +12,7 @@ extern "C" {
 
 #include <malloc.h>
 
-#include "keyboard.h"
+#include "multikb.h"
 
 	struct _OSKBInfo
 	{
@@ -60,7 +60,7 @@ extern "C" {
 		// Create new device, couldn't find matching name
 		if (index == -1)
 		{
-			void* ptr = realloc(kbMgr->kb, sizeof(void*) * (kbMgr->numKB + 1));
+			void* ptr = realloc(kbMgr->kb, sizeof(void*) * (uint64_t)(kbMgr->numKB + 1));
 			if (ptr)
 			{
 				kbMgr->kb = ptr;
@@ -75,7 +75,7 @@ extern "C" {
 				else
 					free(name);
 
-				void* hndlPtr = realloc(kbMgr->_osInfo->devHndl, sizeof(void*) * (kbMgr->numKB + 1));
+				void* hndlPtr = realloc(kbMgr->_osInfo->devHndl, sizeof(void*) * (uint64_t)(kbMgr->numKB + 1));
 				if (hndlPtr)
 				{
 					kbMgr->_osInfo->devHndl = hndlPtr;
