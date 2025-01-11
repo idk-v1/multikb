@@ -293,6 +293,8 @@ extern "C" {
 
 	bool multiKB_KeyRelease(KBManager* kbMgr, uint32_t index, uint32_t key);
 
+	const char* multiKB_GetDeviceName(KBManager* kbMgr, uint32_t index);
+
 #ifdef __cplusplus
 }
 
@@ -311,5 +313,6 @@ public:
 	bool keyLast(uint32_t index, uint32_t key) { return multiKB_KeyLast(&kbMgr, index, key); }
 	bool keyPress(uint32_t index, uint32_t key) { return multiKB_KeyPress(&kbMgr, index, key); }
 	bool keyRelease(uint32_t index, uint32_t key) { return multiKB_KeyRelease(&kbMgr, index, key); }
+	const char* getDeviceName(uint32_t index) { return multiKB_GetDeviceName(&kbMgr, index); }
 };
 #endif

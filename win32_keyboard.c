@@ -267,7 +267,10 @@ extern "C" {
 				devType.hwndTarget = kbMgr->_osInfo->msgWindow;
 
 				if (RegisterRawInputDevices(&devType, 1, sizeof(devType)))
+				{
+					multiKB_Update(kbMgr);
 					return true;
+				}
 			}
 		}
 

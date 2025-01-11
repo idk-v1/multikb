@@ -34,3 +34,12 @@ bool multiKB_KeyRelease(KBManager* kbMgr, uint32_t index, uint32_t key)
 {
 	return multiKB_KeyLast(kbMgr, index, key) && !multiKB_Key(kbMgr, index, key);
 }
+
+const char* multiKB_GetDeviceName(KBManager* kbMgr, uint32_t index)
+{
+	if (!kbMgr)
+		return NULL;
+
+	if (index < kbMgr->numKB)
+		return kbMgr->kb[index]->devName;
+}
