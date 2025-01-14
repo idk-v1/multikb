@@ -351,6 +351,7 @@ extern "C" {
 		{
 			for (uint32_t i = 0; i < kbMgr->numKB; i++)
 			{
+#pragma warning(disable: 6001) // bad visual studio
 				if (kbMgr->kb[i])
 				{
 					if (kbMgr->kb[i]->devName)
