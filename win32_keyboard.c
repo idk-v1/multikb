@@ -34,6 +34,17 @@ extern "C" {
 		return name;
 	}
 
+	static RID_DEVICE_INFO_KEYBOARD getDeviceInfo(void* hndl)
+	{
+		RID_DEVICE_INFO info = { 0 };
+		info.cbSize = sizeof(info);
+
+		uint32_t size = sizeof(info);
+
+		GetRawInputDeviceInfoA(hndl, RIDI_DEVICEINFO, &info, &size);
+		return info.keyboard;
+	}
+
 	static uint32_t findDeviceFromName(char* name, KBManager* kbMgr)
 	{
 		for (uint32_t i = 0; i < kbMgr->numKB; i++)
@@ -54,6 +65,10 @@ extern "C" {
 
 	static void addDevice(void* hndl, KBManager* kbMgr)
 	{
+		uint32_t keyCount = getDeviceInfo(hndl).dwNumberOfKeysTotal;
+		if (keyCount < 26)
+			return;
+
 		char* name = getDeviceName(hndl);
 		uint32_t index = findDeviceFromName(name, kbMgr);
 
@@ -71,6 +86,7 @@ extern "C" {
 					memset(kbMgr->kb[kbMgr->numKB], 0, sizeof(Keyboard));
 					kbMgr->kb[kbMgr->numKB]->state = 1;
 					kbMgr->kb[kbMgr->numKB]->devName = name;
+					kbMgr->kb[kbMgr->numKB]->keyCount = keyCount;
 				}
 				else
 					free(name);

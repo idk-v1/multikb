@@ -43,3 +43,12 @@ const char* multiKB_GetDeviceName(KBManager* kbMgr, uint32_t index)
 	if (index < kbMgr->numKB)
 		return kbMgr->kb[index]->devName;
 }
+
+uint32_t multiKB_GetDeviceKeyCount(KBManager* kbMgr, uint32_t index)
+{
+	if (!kbMgr)
+		return NULL;
+
+	if (index < kbMgr->numKB)
+		return kbMgr->kb[index]->keyCount;
+}

@@ -242,6 +242,7 @@ extern "C" {
 	{
 		char keys[key_Count];
 		bool state;
+		uint32_t keyCount;
 		char* devName;
 	} Keyboard;
 
@@ -295,6 +296,8 @@ extern "C" {
 
 	const char* multiKB_GetDeviceName(KBManager* kbMgr, uint32_t index);
 
+	uint32_t multiKB_GetDeviceKeyCount(KBManager* kbMgr, uint32_t index);
+
 #ifdef __cplusplus
 }
 
@@ -314,5 +317,6 @@ public:
 	bool keyPress(uint32_t index, uint32_t key) { return multiKB_KeyPress(&kbMgr, index, key); }
 	bool keyRelease(uint32_t index, uint32_t key) { return multiKB_KeyRelease(&kbMgr, index, key); }
 	const char* getDeviceName(uint32_t index) { return multiKB_GetDeviceName(&kbMgr, index); }
+	uint32_t getDeviceKeyCount(uint32_t index) { return multiKB_GetDeviceKeyCount(&kbMgr, index); }
 };
 #endif
