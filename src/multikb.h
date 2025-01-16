@@ -292,4 +292,25 @@ void mkb_shutdown();
 
 #ifdef cplusplus
 }
+
+class MultiKB
+{
+public:
+	MultiKB() { mkb_init(); }
+
+	uint8_t update() { mkb_update(); }
+
+	uint64_t deviceCount() { mkb_deviceCount(); }
+	uint64_t deviceConnectedCount() { mkb_deviceConnectedCount(); }
+	uint64_t getLatestDevice() { mkb_getLatestDevice(); }
+
+	const char* deviceName(uint64_t index) { mkb_deviceName(uint64_t index); }
+
+	bool keyState(uint64_t index, uint8_t key) { mkb_keyState(uint64_t index, uint8_t key); }
+	bool keyLast(uint64_t index, uint8_t key) { mkb_keyLast(uint64_t index, uint8_t key); }
+	bool keyDown(uint64_t index, uint8_t key) { mkb_keyDown(uint64_t index, uint8_t key); }
+	bool keyUp(uint64_t index, uint8_t key) { mkb_keyUp(uint64_t index, uint8_t key); }
+
+	~MultiKB() { mkb_shutdown(); }
+};
 #endif
