@@ -271,6 +271,8 @@ extern uint64_t _mkb_keyboardNum;
 extern mkb_Keyboard** _mkb_keyboards;
 extern uint64_t _mkb_latestDev;
 
+extern bool _mkb_isInit;
+
 
 bool mkb_init();
 

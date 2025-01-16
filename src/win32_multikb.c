@@ -15,6 +15,8 @@ uint64_t _mkb_keyboardNum = 0;
 mkb_Keyboard** _mkb_keyboards = NULL;
 uint64_t _mkb_latestDev = -1;
 
+bool _mkb_isInit = false;
+
 
 static inline char* getDeviceName(HANDLE hndl)
 {
@@ -242,6 +244,20 @@ static LRESULT WINAPI mkb_wndproc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
 
 bool mkb_init()
 {
+	if (_mkb_isInit)
+		return false;
+
+	_mkb_isInit = true;
+
+	msgWindow = NULL;
+	devHndl = NULL;
+
+	_mkb_keyboardNum = 0;
+	_mkb_keyboards = NULL;
+	_mkb_latestDev = -1;
+
+	bool _mkb_isInit = false;
+
 	// register window class
 	WNDCLASSA wc = { 0 };
 	wc.lpfnWndProc = mkb_wndproc;
@@ -268,6 +284,9 @@ bool mkb_init()
 
 uint8_t mkb_update()
 {
+	if (!_mkb_isInit)
+		return mkb_DEVICE_NONE;
+
 	uint64_t count = mkb_deviceConnectedCount();
 	uint64_t maxCount = mkb_deviceCount();
 
@@ -359,8 +378,14 @@ bool mkb_keyUp(uint64_t index, uint8_t key)
 
 void mkb_shutdown()
 {
+	if (!_mkb_isInit)
+		return;
+
+	_mkb_isInit = false;
+
 	DestroyWindow(msgWindow);
 	UnregisterClassA("multikeyboard", GetModuleHandleA(NULL));
+	msgWindow = NULL;
 
 	free(devHndl);
 	devHndl = NULL;
@@ -373,4 +398,10 @@ void mkb_shutdown()
 		if (_mkb_keyboards[i])
 			free(_mkb_keyboards[i]);
 	}
+	free(_mkb_keyboards);
+
+
+	_mkb_keyboardNum = 0;
+	_mkb_keyboards = NULL;
+	_mkb_latestDev = -1;
 }
