@@ -259,12 +259,11 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="multikb.c" />
-    <ClCompile Include="main.cpp" />
-    <ClCompile Include="win32_keyboard.c" />
+    <ClCompile Include="src\main.c" />
+    <ClCompile Include="src\win32_multikb.c" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="multikb.h" />
+    <ClInclude Include="src\multikb.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
