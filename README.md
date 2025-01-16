@@ -3,35 +3,46 @@
 
 How this works:<br>
 A hidden window is created that recieves input messages.<br>
-This program registers for raw input messages, and will recieve them as long as any window owned by this program is active.<br>
+This program registers for raw input messages.<br>
 <br>
-The multiKB_Update function runs a message loop to get key changed messages, then sets the last key state to the current key state for comparing later.<br>
-
 ## Usage:
-Create a KBManager struct that will store all of the keyboard data.<br>
-Call multiKB_Setup() to setup internal things and allocate memory.<br><br>
-Using toggle keys like capslock and numlock is on by default. <br>
-Set the useToggle member in KBManager to false to disable this.<br>
-If useToggle is false they will work like any other key and only be on while being held.<br><br>
-
-Call multiKB_Update() to check for key state changes.<br><br>
-
+Call `mkb_init()` to setup internal things and allocate memory.<br>
+Only one instance of this is allowed. I made that questionable design choice last time.<br>
+There is no need for this to even support multiple instances, because this manages all the keyboards on the system.<br>
+Call `mkb_update()` to check for key state changes.<br>
+Call `mkb_shutdown()` to free memory.<br>_
+<br>
+The `mkb_update()` function runs a message loop to get key changed messages, then sets `lastState` to `state` for each key (used to tell if a key was just changed).<br>
+It returns:<br>
+`mkb_DEVICE_NONE` (0) if no devices were changed<br>
+`mkb_DEVICE_CONNECT` (1) if a new device was added<br>
+`mkb_DEVICE_RECONNECT` (2) if the new device has the same name as a previous device<br>
+`mkb_DEVICE_DISCONNECT` (3) if a device was removed<br>
+<br>
+Use `mkb_getLatestDevice()` to get the index of the last device changed.<br>
+Use `mkb_deviceCount()` to get the total device count (including disconnected devices).<br>
+Use `mkb_deviceConnectedCount()` to get the active device count (excluding disconnected devices).<br>
+The device index does not shift over when a device is removed,<br>
+because the project I am making this for uses keyboards like controllers, and shifting the player indexes would mess up many things.<br>
+<br>
 ### Helper functions
-multiKB_Key() gets the current key state<br>
-multiKB_KeyLast() gets the last key state<br>
-multiKB_KeyPress() returns true if the current state is on and the last state was off<br>
-multiKB_KeyRelease() returns true if the current state is off and the last state was on<br><br>
-To read the key state without these:<br>
-0th bit - Raw State<br>
-1st bit - Current State<br>
-2nd bit - Last State<br><br>
-
-Call multiKB_Setup() to release allocated memory when you are done with the program.<br><br>
-
+`mkb_key()` gets the current key state<br>
+`mkb_keyLast()` gets the last key state<br>
+`mkb_keyDown()` gets if the key was just pressed<br>
+`mkb_keyUp()` gets if the key was just released<br>
+<br>
 ## C++ Wrapper:
-create a KBManagerPP class<br>
-update() to check for key state changes<br><br>
-key() gets the current key state<br>
-keyLast() gets the last key state<br>
-keyPress() returns true if the current state is on and the last state was off<br>
-keyRelease() returns true if the current state is off and the last state was on<br><br>
+MultiKB class<br>
+It just calls the C functions, nothing else, only one instance will work<br>
+It doesn't do anything different, just some people are very unhappy about touching C at all :(<br>
+<br>
+<br>
+```c
+         ___   ___   ___
+        /   \ /   \ /   \
+   /\/\|  |  |  |  |  |  |
+  ('w' |  |     |  |  |  |__
+   \_____/ \___/ \___/ \____)
+
+           Inch Cat
+```
