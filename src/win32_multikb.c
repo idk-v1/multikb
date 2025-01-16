@@ -16,15 +16,6 @@ mkb_Keyboard** _mkb_keyboards = NULL;
 uint64_t _mkb_latestDev = -1;
 
 
-static inline void* resize(void* array, uint64_t count, uint64_t size)
-{
-	void* ptr = realloc(array, count * size);
-	if (!ptr)
-		free(array);
-	return ptr;
-}
-
-
 static inline char* getDeviceName(HANDLE hndl)
 {
 	uint32_t size = 0;
@@ -85,10 +76,21 @@ static void mkb_addDevice(HANDLE hndl)
 		_mkb_keyboardNum++;
 
 		// resize
-		devHndl = resize(devHndl, mkb_deviceCount(), sizeof(HANDLE));
-		_mkb_keyboards = resize(_mkb_keyboards, mkb_deviceCount(), sizeof(mkb_Keyboard*));
-		if (!devHndl || !_mkb_keyboards)
+		void* devHndlPtr = realloc(devHndl, mkb_deviceCount() * sizeof(HANDLE));
+		if (!devHndlPtr)
+		{
+			mkb_shutdown();
 			return;
+		}
+		devHndl = devHndlPtr;
+
+		void* keyboardPtr = realloc(_mkb_keyboards, mkb_deviceCount() * sizeof(mkb_Keyboard*));
+		if (!keyboardPtr)
+		{
+			mkb_shutdown();
+			return;
+		}
+		_mkb_keyboards = keyboardPtr;
 
 		// alloc new keyboard
 		mkb_Keyboard* kb = malloc(sizeof(mkb_Keyboard));
@@ -104,6 +106,8 @@ static void mkb_addDevice(HANDLE hndl)
 			_mkb_keyboards[index] = kb;
 			devHndl[index] = hndl;
 		}
+		else
+			return;
 	}
 	else // found matching device name, reconnected
 	{
@@ -127,6 +131,7 @@ static void mkb_removeDevice(HANDLE hndl)
 		// set all key states to off,just in case
 		memset(_mkb_keyboards[index]->keys, 0, mkb_KEY_COUNT);
 		_mkb_keyboards[index]->connected = false;
+		devHndl[index] = NULL;
 
 		_mkb_latestDev = index;
 	}
