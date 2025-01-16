@@ -100,7 +100,7 @@ enum
 	mkb_KEY_BSLASh = '\\',
 	mkb_KEY_RBRACK = ']',
 
-	mkb_KEY_GRAVE = '`',
+	mkb_KEY_BACKTICK = '`',
 
 	mkb_KEY_NUMDIV,
 	mkb_KEY_NUMMUL,
@@ -228,7 +228,7 @@ static const char* mkb_keyNames[mkb_KEY_COUNT] =
 	"Right Bracket",
 	"","",
 
-	"Grave",
+	"Backtick",
 
 	"NumDivide",
 	"NumMultiply",
@@ -286,6 +286,10 @@ bool mkb_keyState(uint64_t index, uint8_t key);
 bool mkb_keyLast(uint64_t index, uint8_t key);
 bool mkb_keyDown(uint64_t index, uint8_t key);
 bool mkb_keyUp(uint64_t index, uint8_t key);
+
+// These are global states, so they have to be different
+bool mkb_capslockState();
+bool mkb_numlockState();
 
 void mkb_shutdown();
 

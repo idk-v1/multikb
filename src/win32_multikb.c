@@ -145,58 +145,58 @@ static uint64_t keyFromRaw(RAWKEYBOARD key)
 		return key.VKey - 'A' + mkb_KEY_A;
 	if (key.VKey >= '0' && key.VKey <= '9')
 		return key.VKey - '0' + mkb_KEY_0;
-	if (key.VKey >= '0' + 48 && key.VKey <= '9' + 48)
-		return key.VKey - '0' - 48 + mkb_KEY_NUM0;
-	if (key.VKey >= 112 && key.VKey <= 124)
-		return key.VKey - 112 + mkb_KEY_FN1;
+	if (key.VKey >= VK_NUMPAD0 && key.VKey <= VK_NUMPAD9)
+		return key.VKey - VK_NUMPAD0 + mkb_KEY_NUM0;
+	if (key.VKey >= VK_F1 && key.VKey <= VK_F12)
+		return key.VKey - VK_F1 + mkb_KEY_FN1;
 
 	switch (key.VKey)
 	{
-	case  20: return mkb_KEY_CAPSLOCK;
-	case 144: return mkb_KEY_NUMLOCK;
+	case VK_CAPITAL: return mkb_KEY_CAPSLOCK;
+	case VK_NUMLOCK: return mkb_KEY_NUMLOCK;
 
-	case  17: return mkb_KEY_CTRL;
-	case  16: return mkb_KEY_SHIFT;
-	case  18: return mkb_KEY_ALT;
-	case  91:
-	case  92: return mkb_KEY_SYS;
-	case  27: return mkb_KEY_ESC;
-	case   8: return mkb_KEY_BACKSP;
-	case   9: return mkb_KEY_TAB;
-	case  13: return mkb_KEY_ENTER;
-	case  46: return mkb_KEY_DEL;
-	case  35: return mkb_KEY_END;
-	case  36: return mkb_KEY_HOME;
-	case  45: return mkb_KEY_INSERT;
-	case  44: return mkb_KEY_PRINTSCR;
-	case  33: return mkb_KEY_PAGEUP;
-	case  34: return mkb_KEY_PAGEDOWN;
-	case  37: return mkb_KEY_LEFT;
-	case  38: return mkb_KEY_UP;
-	case  39: return mkb_KEY_RIGHT;
-	case  40: return mkb_KEY_DOWN;
+	case VK_CONTROL: return mkb_KEY_CTRL;
+	case VK_SHIFT: return mkb_KEY_SHIFT;
+	case VK_MENU: return mkb_KEY_ALT;
+	case VK_LWIN:
+	case VK_RWIN: return mkb_KEY_SYS;
+	case VK_ESCAPE: return mkb_KEY_ESC;
+	case VK_BACK: return mkb_KEY_BACKSP;
+	case VK_TAB: return mkb_KEY_TAB;
+	case VK_RETURN: return mkb_KEY_ENTER;
+	case VK_DELETE: return mkb_KEY_DEL;
+	case VK_END: return mkb_KEY_END;
+	case VK_HOME: return mkb_KEY_HOME;
+	case VK_INSERT: return mkb_KEY_INSERT;
+	case VK_SNAPSHOT: return mkb_KEY_PRINTSCR;
+	case VK_PRIOR: return mkb_KEY_PAGEUP;
+	case VK_NEXT: return mkb_KEY_PAGEDOWN;
+	case VK_LEFT: return mkb_KEY_LEFT;
+	case VK_UP: return mkb_KEY_UP;
+	case VK_RIGHT: return mkb_KEY_RIGHT;
+	case VK_DOWN: return mkb_KEY_DOWN;
 
-	case  32: return mkb_KEY_SPACE;
-	case 222: return mkb_KEY_APOSTR;
-	case 188: return mkb_KEY_COMMA;
-	case 189: return mkb_KEY_MINUS;
-	case 190: return mkb_KEY_PERIOD;
-	case 191: return mkb_KEY_FSLASH;
+	case VK_SPACE: return mkb_KEY_SPACE;
+	case VK_OEM_7: return mkb_KEY_APOSTR;
+	case VK_OEM_COMMA: return mkb_KEY_COMMA;
+	case VK_OEM_MINUS: return mkb_KEY_MINUS;
+	case VK_OEM_PERIOD: return mkb_KEY_PERIOD;
+	case VK_OEM_2: return mkb_KEY_FSLASH;
 
-	case 186: return mkb_KEY_SEMICOLON;
-	case 187: return mkb_KEY_EQUAL;
+	case VK_OEM_1: return mkb_KEY_SEMICOLON;
+	case VK_OEM_PLUS: return mkb_KEY_EQUAL;
 
-	case 219: return mkb_KEY_LBRACK;
-	case 220: return mkb_KEY_BSLASh;
-	case 221: return mkb_KEY_RBRACK;
+	case VK_OEM_4: return mkb_KEY_LBRACK;
+	case VK_OEM_5: return mkb_KEY_BSLASh;
+	case VK_OEM_6: return mkb_KEY_RBRACK;
 
-	case 192: return mkb_KEY_GRAVE;
+	case VK_OEM_3: return mkb_KEY_BACKTICK;
 
-	case 111: return mkb_KEY_NUMDIV;
-	case 106: return mkb_KEY_NUMMUL;
-	case 109: return mkb_KEY_NUMSUB;
-	case 107: return mkb_KEY_NUMADD;
-	case 110: return mkb_KEY_NUMPERIOD;
+	case VK_DIVIDE: return mkb_KEY_NUMDIV;
+	case VK_MULTIPLY: return mkb_KEY_NUMMUL;
+	case VK_SUBTRACT: return mkb_KEY_NUMSUB;
+	case VK_ADD: return mkb_KEY_NUMADD;
+	case VK_DECIMAL: return mkb_KEY_NUMPERIOD;
 
 	case 255: return 0;
 	}
@@ -374,6 +374,16 @@ bool mkb_keyUp(uint64_t index, uint8_t key)
 		return (!_mkb_keyboards[index]->keys[key].state &&
 			_mkb_keyboards[index]->keys[key].lastState);
 	return false;
+}
+
+bool mkb_capslockState()
+{
+	return ((GetKeyState(VK_CAPITAL) & 0x0001));
+}
+
+bool mkb_numlockState()
+{
+	return ((GetKeyState(VK_NUMLOCK) & 0x0001));
 }
 
 void mkb_shutdown()
