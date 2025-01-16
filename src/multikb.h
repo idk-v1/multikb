@@ -14,10 +14,8 @@ enum
 {
 	mkb_KEY_NULL = '\0',
 
-	mkb_KEY_TOGGLESTART = mkb_KEY_NULL,
 	mkb_KEY_CAPSLOCK,
 	mkb_KEY_NUMLOCK,
-	mkb_KEY_TOGGLEEND = mkb_KEY_NUMLOCK,
 
 	mkb_KEY_CTRL,
 	mkb_KEY_SHIFT,
