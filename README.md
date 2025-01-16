@@ -1,17 +1,16 @@
 # MultiKB
 ## Simple windows functions to read seperate input from multiple keyboards
 
-How this works:<br>
+## How this works:
 A hidden window is created that recieves input messages.<br>
 This program registers for raw input messages.<br>
 <br>
 ## Usage:
+### Setup:
 Call `mkb_init()` to setup internal things and allocate memory.<br>
 Only one instance of this is allowed. I made that questionable design choice last time.<br>
 There is no need for this to even support multiple instances, because this manages all the keyboards on the system.<br>
-Call `mkb_update()` to check for key state changes.<br>
-Call `mkb_shutdown()` to free memory.<br>_
-<br>
+### Update Loop:
 The `mkb_update()` function runs a message loop to get key changed messages, then sets `lastState` to `state` for each key (used to tell if a key was just changed).<br>
 It returns:<br>
 `mkb_DEVICE_NONE` (0) if no devices were changed<br>
@@ -24,12 +23,14 @@ Use `mkb_deviceCount()` to get the total device count (including disconnected de
 Use `mkb_deviceConnectedCount()` to get the active device count (excluding disconnected devices).<br>
 The device index does not shift over when a device is removed,<br>
 because the project I am making this for uses keyboards like controllers, and shifting the player indexes would mess up many things.<br>
-<br>
-### Helper functions
+### Key States:
 `mkb_key()` gets the current key state<br>
 `mkb_keyLast()` gets the last key state<br>
-`mkb_keyDown()` gets if the key was just pressed<br>
-`mkb_keyUp()` gets if the key was just released<br>
+`mkb_keyDown()` gets if the key was just pressed `(state && !lastState)`<br>
+`mkb_keyUp()` gets if the key was just released `(!state && lastState)`<br>
+### Shutdown:
+Call `mkb_shutdown()` to free memory when you are done.<br>
+To use this again, you have to call `mkb_init()` again.<br>
 <br>
 ## C++ Wrapper:
 MultiKB class<br>
