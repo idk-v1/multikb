@@ -261,7 +261,8 @@ typedef struct mkb_Keyboard
 {
 	mkb_Key keys[mkb_KEY_COUNT];
 	bool connected;
-	uint32_t keyCount;
+	uint8_t lastKey;
+	uint64_t keyCount;
 	char* name;
 } mkb_Keyboard;
 

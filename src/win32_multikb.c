@@ -100,7 +100,7 @@ static void mkb_addDevice(HANDLE hndl)
 		{
 			memset(kb, 0, sizeof(mkb_Keyboard));
 			kb->connected = true;
-			kb->keyCount = (uint32_t)keyCount;
+			kb->keyCount = keyCount;
 			kb->name = name;
 
 			// add to array
@@ -133,6 +133,7 @@ static void mkb_removeDevice(HANDLE hndl)
 		// set all key states to off,just in case
 		memset(_mkb_keyboards[index]->keys, 0, mkb_KEY_COUNT);
 		_mkb_keyboards[index]->connected = false;
+		_mkb_keyboards[index]->lastKey = 0;
 		devHndl[index] = NULL;
 
 		_mkb_latestDev = index;
@@ -214,6 +215,8 @@ static void parseInput(HANDLE hndl)
 	if (key == 0 || device == -1)
 		return;
 
+	if (data.data.keyboard.Message == WM_KEYDOWN)
+		_mkb_keyboards[device]->lastKey = key;
 	_mkb_keyboards[device]->keys[key].state = (data.data.keyboard.Message == WM_KEYDOWN);
 }
 
