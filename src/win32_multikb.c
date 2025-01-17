@@ -216,7 +216,7 @@ static void parseInput(HANDLE hndl)
 		return;
 
 	if (data.data.keyboard.Message == WM_KEYDOWN)
-		_mkb_keyboards[device]->lastKey = key;
+		_mkb_keyboards[device]->lastKey = (uint8_t)key;
 	_mkb_keyboards[device]->keys[key].state = (data.data.keyboard.Message == WM_KEYDOWN);
 }
 
