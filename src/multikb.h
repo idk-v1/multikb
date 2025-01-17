@@ -1,5 +1,5 @@
 #pragma once
-#ifdef cplusplus
+#ifdef __cplusplus
 extern "C" {
 #endif
 #if (0) // bad visual studio
@@ -297,7 +297,7 @@ bool mkb_numlockState();
 void mkb_shutdown();
 
 
-#ifdef cplusplus
+#ifdef __cplusplus
 }
 
 class MultiKB
