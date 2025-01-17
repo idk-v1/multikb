@@ -378,6 +378,13 @@ bool mkb_keyUp(uint64_t index, uint8_t key)
 	return false;
 }
 
+uint8_t mkb_lastKey(uint64_t index)
+{
+	if (index < mkb_deviceCount())
+		return _mkb_keyboards[index]->lastKey;
+	return 0;
+}
+
 bool mkb_capslockState()
 {
 	return ((GetKeyState(VK_CAPITAL) & 0x0001));

@@ -288,6 +288,8 @@ bool mkb_keyLast(uint64_t index, uint8_t key);
 bool mkb_keyDown(uint64_t index, uint8_t key);
 bool mkb_keyUp(uint64_t index, uint8_t key);
 
+uint8_t mkb_lastKey(uint64_t index);
+
 // These are global states, so they have to be different
 bool mkb_capslockState();
 bool mkb_numlockState();
@@ -309,12 +311,14 @@ public:
 	uint64_t deviceConnectedCount() { mkb_deviceConnectedCount(); }
 	uint64_t getLatestDevice() { mkb_getLatestDevice(); }
 
-	const char* deviceName(uint64_t index) { mkb_deviceName(uint64_t index); }
+	const char* deviceName(uint64_t index) { mkb_deviceName(index); }
 
-	bool keyState(uint64_t index, uint8_t key) { mkb_keyState(uint64_t index, uint8_t key); }
-	bool keyLast(uint64_t index, uint8_t key) { mkb_keyLast(uint64_t index, uint8_t key); }
-	bool keyDown(uint64_t index, uint8_t key) { mkb_keyDown(uint64_t index, uint8_t key); }
-	bool keyUp(uint64_t index, uint8_t key) { mkb_keyUp(uint64_t index, uint8_t key); }
+	bool keyState(uint64_t index, uint8_t key) { mkb_keyState(index, key); }
+	bool keyLast(uint64_t index, uint8_t key) { mkb_keyLast(index, key); }
+	bool keyDown(uint64_t index, uint8_t key) { mkb_keyDown(index, key); }
+	bool keyUp(uint64_t index, uint8_t key) { mkb_keyUp(index, key); }
+
+	uint8_t lastKey(uint64_t index) { mkb_lastKey(index); }
 
 	~MultiKB() { mkb_shutdown(); }
 };
