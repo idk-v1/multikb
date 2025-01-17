@@ -138,7 +138,6 @@ static void mkb_removeDevice(HANDLE hndl)
 		_mkb_latestDev = index;
 	}
 }
-
 static uint64_t keyFromRaw(RAWKEYBOARD key)
 {
 	if (key.VKey >= 'A' && key.VKey <= 'Z')
@@ -163,7 +162,7 @@ static uint64_t keyFromRaw(RAWKEYBOARD key)
 	case VK_ESCAPE: return mkb_KEY_ESC;
 	case VK_BACK: return mkb_KEY_BACKSP;
 	case VK_TAB: return mkb_KEY_TAB;
-	case VK_RETURN: return mkb_KEY_ENTER;
+	case VK_RETURN: return ((key.Flags & RI_KEY_E0) ? mkb_KEY_NUMENTER : mkb_KEY_ENTER);
 	case VK_DELETE: return mkb_KEY_DEL;
 	case VK_END: return mkb_KEY_END;
 	case VK_HOME: return mkb_KEY_HOME;

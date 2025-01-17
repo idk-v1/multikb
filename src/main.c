@@ -30,7 +30,13 @@ int main()
 			for (int k = 0; k < mkb_KEY_COUNT; k++)
 			{
 				if (mkb_keyDown(i, k))
+				{
 					printf("Keyboard [%d]: Pressed %s\n", i, mkb_keyNames[k]);
+					if (k == mkb_KEY_CAPSLOCK)
+						printf("Capslock State: %s\n", (mkb_capslockState()) ? "true" : "false");
+					else if (k == mkb_KEY_NUMLOCK)
+						printf("Numlock State: %s\n", (mkb_numlockState()) ? "true" : "false");
+				}
 				if (mkb_keyUp(i, k))
 					printf("Keyboard [%d]: Released %s\n", i, mkb_keyNames[k]);
 			}
