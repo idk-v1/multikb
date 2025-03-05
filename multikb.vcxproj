@@ -260,10 +260,9 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="src\main.c" />
-    <ClCompile Include="src\win32_multikb.c" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="src\multikb.h" />
+    <Library Include="src\hid.lib" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
