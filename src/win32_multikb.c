@@ -1,9 +1,7 @@
 #define WIN32_LEAN_AND_MEAN
 #define NOMINMAX
 #define NO_STRICT
-#pragma comment(lib, "hid.lib")
 #include <Windows.h>
-#include <hidusage.h>
 #include <hidsdi.h>
 
 #include "multikb.h"
