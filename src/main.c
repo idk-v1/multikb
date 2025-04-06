@@ -6,7 +6,7 @@ int main()
 {
 	bool running = mkb_init();
 
-	printf("Devices: %llu\n", mkb_deviceCount());
+	printf("Devices: %llu\n", mkb_deviceConnectedCount());
 
 	while (running)
 	{
