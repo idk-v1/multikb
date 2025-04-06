@@ -271,11 +271,12 @@ extern mkb_Keyboard** _mkb_keyboards;
 extern uint64_t _mkb_latestDev;
 
 extern bool _mkb_isInit;
-
+extern uint8_t _mkb_lastEvent;
 
 bool mkb_init();
 
 uint8_t mkb_update();
+uint8_t mkb_getLastEvent();
 
 uint64_t mkb_deviceCount();
 uint64_t mkb_deviceConnectedCount();
@@ -305,20 +306,24 @@ class MultiKB
 public:
 	MultiKB() { mkb_init(); }
 
-	uint8_t update() { mkb_update(); }
+	uint8_t update() { return mkb_update(); }
+	uint8_t getLastEvent() { return mkb_getLastEvent(); }
 
-	uint64_t deviceCount() { mkb_deviceCount(); }
-	uint64_t deviceConnectedCount() { mkb_deviceConnectedCount(); }
-	uint64_t getLatestDevice() { mkb_getLatestDevice(); }
+	uint64_t deviceCount() { return mkb_deviceCount(); }
+	uint64_t deviceConnectedCount() { return mkb_deviceConnectedCount(); }
+	uint64_t getLatestDevice() { return mkb_getLatestDevice(); }
 
-	const char* deviceName(uint64_t index) { mkb_deviceName(index); }
+	const char* deviceName(uint64_t index) { return mkb_deviceName(index); }
 
-	bool keyState(uint64_t index, uint8_t key) { mkb_keyState(index, key); }
-	bool keyLast(uint64_t index, uint8_t key) { mkb_keyLast(index, key); }
-	bool keyDown(uint64_t index, uint8_t key) { mkb_keyDown(index, key); }
-	bool keyUp(uint64_t index, uint8_t key) { mkb_keyUp(index, key); }
+	bool keyState(uint64_t index, uint8_t key) { return mkb_keyState(index, key); }
+	bool keyLast(uint64_t index, uint8_t key) { return mkb_keyLast(index, key); }
+	bool keyDown(uint64_t index, uint8_t key) { return mkb_keyDown(index, key); }
+	bool keyUp(uint64_t index, uint8_t key) { return mkb_keyUp(index, key); }
 
-	uint8_t lastKey(uint64_t index) { mkb_lastKey(index); }
+	bool capslockState() { return mkb_capslockState(); }
+	bool numlockState() { return mkb_numlockState(); }
+
+	uint8_t lastKey(uint64_t index) { return mkb_lastKey(index); }
 
 	~MultiKB() { mkb_shutdown(); }
 };

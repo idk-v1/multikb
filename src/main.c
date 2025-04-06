@@ -10,7 +10,8 @@ int main()
 
 	while (running)
 	{
-		switch (mkb_update())
+		mkb_update();
+		switch (mkb_getLastEvent())
 		{
 		case mkb_DEVICE_CONNECT:
 			printf("Device %llu Connected\n", mkb_getLatestDevice());

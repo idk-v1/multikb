@@ -14,6 +14,7 @@ mkb_Keyboard** _mkb_keyboards = NULL;
 uint64_t _mkb_latestDev = -1;
 
 bool _mkb_isInit = false;
+uint8_t _mkb_lastEvent = mkb_DEVICE_NONE;
 
 
 static inline char* getDeviceName(HANDLE hndl)
@@ -306,17 +307,26 @@ uint8_t mkb_update()
 	uint64_t newCount = mkb_deviceConnectedCount();
 	uint64_t newMaxCount = mkb_deviceCount();
 
+
+	_mkb_lastEvent = mkb_DEVICE_NONE;
+
 	if (newCount > count)
 	{
 		if (newMaxCount > maxCount)
-			return mkb_DEVICE_CONNECT;
+			_mkb_lastEvent = mkb_DEVICE_CONNECT;
 		else
-			return mkb_DEVICE_RECONNECT;
+			_mkb_lastEvent = mkb_DEVICE_RECONNECT;
 	}
 	else if (newCount < count)
-		return mkb_DEVICE_DISCONNECT;
+		_mkb_lastEvent = mkb_DEVICE_DISCONNECT;
 
-	return mkb_DEVICE_NONE;
+
+	return _mkb_lastEvent;
+}
+
+uint8_t mkb_getLastEvent()
+{
+	return _mkb_lastEvent;
 }
 
 uint64_t mkb_deviceCount()
@@ -324,7 +334,7 @@ uint64_t mkb_deviceCount()
 	return _mkb_keyboardNum;
 }
 
- uint64_t mkb_deviceConnectedCount()
+uint64_t mkb_deviceConnectedCount()
 {
 	uint64_t count = 0;
 	for (uint64_t i = 0; i < mkb_deviceCount(); i++)
@@ -334,10 +344,10 @@ uint64_t mkb_deviceCount()
 	return count;
 }
 
- uint64_t mkb_getLatestDevice()
- {
-	 return _mkb_latestDev;
- }
+uint64_t mkb_getLatestDevice()
+{
+	return _mkb_latestDev;
+}
 
 const char* mkb_deviceName(uint64_t index)
 {
