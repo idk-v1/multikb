@@ -298,10 +298,6 @@ uint64_t mkb_getLatestDevice();
 // Ex: call with 5 to get the index of the fifth device, returns 8
 uint64_t mkb_getNthDevice(uint64_t index);
 
-// Reorders devices to remove gaps between them in memory
-// WARNING: your current device indexes and this library's last states will be messed up
-void mkb_defrag();
-
 // Returns the system device name
 const char* mkb_deviceName(uint64_t index); 
 
@@ -344,8 +340,6 @@ public:
 	uint64_t getLatestDevice() { return mkb_getLatestDevice(); }
 
 	uint64_t getNthDevice(uint64_t index) { return mkb_getNthDevice(index); }
-
-	void defrag() { mkb_defrag(); }
 
 	const char* deviceName(uint64_t index) { return mkb_deviceName(index); }
 

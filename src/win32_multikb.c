@@ -357,19 +357,6 @@ uint64_t mkb_getNthDevice(uint64_t index)
 	return -1;
 }
 
-void mkb_defrag()
-{
-	for (uint64_t i = 0; i < mkb_deviceConnectedCount(); i++)
-	{
-		uint64_t index = mkb_getNthDevice(i);
-		if (index != -1)
-			_mkb_keyboards[i] = _mkb_keyboards[index];
-	}
-
-	_mkb_latestDev = -1;
-	_mkb_lastEvent = mkb_DEVICE_NONE;
-}
-
 const char* mkb_deviceName(uint64_t index)
 {
 	if (index < mkb_deviceCount())
