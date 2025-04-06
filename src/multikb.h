@@ -273,29 +273,59 @@ extern uint64_t _mkb_latestDev;
 extern bool _mkb_isInit;
 extern uint8_t _mkb_lastEvent;
 
-bool mkb_init();
+// Initializes library (Will not work without this)
+bool mkb_init(); 
 
-uint8_t mkb_update();
-uint8_t mkb_getLastEvent();
+// Updates the keyboard states, then returns if a device was connected or disconnected
+uint8_t mkb_update(); 
+// Returns if a device was connected or disconnected
+uint8_t mkb_getLastEvent(); 
 
-uint64_t mkb_deviceCount();
-uint64_t mkb_deviceConnectedCount();
-uint64_t mkb_getLatestDevice();
+// Returns total number of devices that have connected, but may not be connected
+// Should be used for iterating through all devices
+uint64_t mkb_deviceCount(); 
 
-const char* mkb_deviceName(uint64_t index);
+// Should NOT be used for iterating through all devices
+// Returns number of currently connected devices
+uint64_t mkb_deviceConnectedCount(); 
+// Returns the index of the last device to connect or disconnect
+uint64_t mkb_getLatestDevice(); 
 
-bool mkb_keyState(uint64_t index, uint8_t key);
-bool mkb_keyLast(uint64_t index, uint8_t key);
-bool mkb_keyDown(uint64_t index, uint8_t key);
-bool mkb_keyUp(uint64_t index, uint8_t key);
+// Returns the index of the next device
+// Used if you need to reorder things using the keyboards and need to refind the device indexes again
+// Returns -1u64 if not found
+// Ex: call with 0 to get the index of the first device, returns 2
+// Ex: call with 5 to get the index of the fifth device, returns 8
+uint64_t mkb_getNthDevice(uint64_t index);
 
-uint8_t mkb_lastKey(uint64_t index);
+// Reorders devices to remove gaps between them in memory
+// WARNING: your current device indexes and this library's last states will be messed up
+void mkb_defrag();
+
+// Returns the system device name
+const char* mkb_deviceName(uint64_t index); 
+
+// Returns if the key is pressed
+bool mkb_keyState(uint64_t index, uint8_t key); 
+// Returns if the key was pressed last update
+bool mkb_keyLast(uint64_t index, uint8_t key); 
+// Returns if the key is pressed this update, but wasn't last update
+bool mkb_keyDown(uint64_t index, uint8_t key); 
+// Returns if the key isn't pressed this update, but was last update
+bool mkb_keyUp(uint64_t index, uint8_t key); 
+
+// Returns the last key changed for a keyboard
+uint8_t mkb_lastKey(uint64_t index); 
 
 // These are global states, so they have to be different
-bool mkb_capslockState();
-bool mkb_numlockState();
 
-void mkb_shutdown();
+// Returns the system capslock state
+bool mkb_capslockState(); 
+// Returns the system numberlock state
+bool mkb_numlockState(); 
+
+// Frees memory and handles this library used
+void mkb_shutdown(); 
 
 
 #ifdef __cplusplus
@@ -312,6 +342,10 @@ public:
 	uint64_t deviceCount() { return mkb_deviceCount(); }
 	uint64_t deviceConnectedCount() { return mkb_deviceConnectedCount(); }
 	uint64_t getLatestDevice() { return mkb_getLatestDevice(); }
+
+	uint64_t getNthDevice(uint64_t index) { return mkb_getNthDevice(index); }
+
+	void defrag() { mkb_defrag(); }
 
 	const char* deviceName(uint64_t index) { return mkb_deviceName(index); }
 

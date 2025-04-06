@@ -257,8 +257,6 @@ bool mkb_init()
 	_mkb_keyboards = NULL;
 	_mkb_latestDev = -1;
 
-	bool _mkb_isInit = false;
-
 	// register window class
 	WNDCLASSA wc = { 0 };
 	wc.lpfnWndProc = mkb_wndproc;
@@ -347,6 +345,29 @@ uint64_t mkb_deviceConnectedCount()
 uint64_t mkb_getLatestDevice()
 {
 	return _mkb_latestDev;
+}
+
+uint64_t mkb_getNthDevice(uint64_t index)
+{
+	uint64_t count = 0;
+	for (uint64_t i = 0; i < mkb_deviceCount(); i++)
+		if (_mkb_keyboards[i]->connected)
+			if (++count == index)
+				return index;
+	return -1;
+}
+
+void mkb_defrag()
+{
+	for (uint64_t i = 0; i < mkb_deviceConnectedCount(); i++)
+	{
+		uint64_t index = mkb_getNthDevice(i);
+		if (index != -1)
+			_mkb_keyboards[i] = _mkb_keyboards[index];
+	}
+
+	_mkb_latestDev = -1;
+	_mkb_lastEvent = mkb_DEVICE_NONE;
 }
 
 const char* mkb_deviceName(uint64_t index)
