@@ -140,6 +140,7 @@ static void mkb_removeDevice(HANDLE hndl)
 }
 static uint64_t keyFromRaw(RAWKEYBOARD key)
 {
+
 	if (key.VKey >= 'A' && key.VKey <= 'Z')
 		return key.VKey - 'A' + mkb_KEY_A;
 	if (key.VKey >= '0' && key.VKey <= '9')
@@ -153,12 +154,8 @@ static uint64_t keyFromRaw(RAWKEYBOARD key)
 	{
 	case VK_CAPITAL: return mkb_KEY_CAPSLOCK;
 	case VK_NUMLOCK: return mkb_KEY_NUMLOCK;
+	case VK_SCROLL: return mkb_KEY_SCROLLLOCK;
 
-	case VK_CONTROL: return mkb_KEY_CTRL;
-	case VK_SHIFT: return mkb_KEY_SHIFT;
-	case VK_MENU: return mkb_KEY_ALT;
-	case VK_LWIN:
-	case VK_RWIN: return mkb_KEY_SYS;
 	case VK_ESCAPE: return mkb_KEY_ESC;
 	case VK_BACK: return mkb_KEY_BACKSP;
 	case VK_TAB: return mkb_KEY_TAB;
@@ -175,6 +172,12 @@ static uint64_t keyFromRaw(RAWKEYBOARD key)
 	case VK_RIGHT: return mkb_KEY_RIGHT;
 	case VK_DOWN: return mkb_KEY_DOWN;
 
+	case VK_CONTROL: return (key.Flags & RI_KEY_E0 ? mkb_KEY_CTRL_R : mkb_KEY_CTRL_L);
+	case VK_SHIFT: return (key.Flags & RI_KEY_E0 ? mkb_KEY_SHIFT_R : mkb_KEY_SHIFT_L);
+	case VK_MENU: return (key.Flags & RI_KEY_E0 ? mkb_KEY_ALT_R : mkb_KEY_ALT_L);
+	case VK_LWIN: return mkb_KEY_WIN_L;
+	case VK_RWIN: return mkb_KEY_WIN_R;
+
 	case VK_SPACE: return mkb_KEY_SPACE;
 	case VK_OEM_7: return mkb_KEY_APOSTR;
 	case VK_OEM_COMMA: return mkb_KEY_COMMA;
@@ -186,7 +189,7 @@ static uint64_t keyFromRaw(RAWKEYBOARD key)
 	case VK_OEM_PLUS: return mkb_KEY_EQUAL;
 
 	case VK_OEM_4: return mkb_KEY_LBRACK;
-	case VK_OEM_5: return mkb_KEY_BSLASh;
+	case VK_OEM_5: return mkb_KEY_BSLASH;
 	case VK_OEM_6: return mkb_KEY_RBRACK;
 
 	case VK_OEM_3: return mkb_KEY_BACKTICK;
@@ -196,11 +199,9 @@ static uint64_t keyFromRaw(RAWKEYBOARD key)
 	case VK_SUBTRACT: return mkb_KEY_NUMSUB;
 	case VK_ADD: return mkb_KEY_NUMADD;
 	case VK_DECIMAL: return mkb_KEY_NUMPERIOD;
-
-	case 255: return 0;
 	}
 
-	return 0; // Unnown
+	return 0; // Unknown
 }
 
 static void parseInput(HANDLE hndl)
@@ -214,9 +215,12 @@ static void parseInput(HANDLE hndl)
 	if (key == 0 || device == -1)
 		return;
 
-	if (data.data.keyboard.Message == WM_KEYDOWN)
+	// WHY IS THE DAMN ALT KEY A SYSTEM KEY BUT THE WINDOWS KEY ISNT
+	// WHY DOES IT HAVE A DIFFERENT MESSAGE
+	if (data.data.keyboard.Message == WM_KEYDOWN || data.data.keyboard.Message == WM_SYSKEYDOWN)
 		_mkb_keyboards[device]->lastKey = (uint8_t)key;
-	_mkb_keyboards[device]->keys[key].state = (data.data.keyboard.Message == WM_KEYDOWN);
+	_mkb_keyboards[device]->keys[key].state = 
+		(data.data.keyboard.Message == WM_KEYDOWN || data.data.keyboard.Message == WM_SYSKEYDOWN);
 }
 
 static LRESULT WINAPI mkb_wndproc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
@@ -409,6 +413,11 @@ bool mkb_capslockState()
 bool mkb_numlockState()
 {
 	return ((GetKeyState(VK_NUMLOCK) & 0x0001));
+}
+
+bool mkb_scrolllockState()
+{
+	return ((GetKeyState(VK_SCROLL) & 0x0001));
 }
 
 void mkb_shutdown()

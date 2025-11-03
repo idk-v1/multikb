@@ -16,11 +16,8 @@ enum
 
 	mkb_KEY_CAPSLOCK,
 	mkb_KEY_NUMLOCK,
+	mkb_KEY_SCROLLLOCK,
 
-	mkb_KEY_CTRL,
-	mkb_KEY_SHIFT,
-	mkb_KEY_ALT,
-	mkb_KEY_SYS,
 	mkb_KEY_ESC,
 	mkb_KEY_BACKSP = '\b',
 	mkb_KEY_TAB = '\t',
@@ -37,16 +34,14 @@ enum
 	mkb_KEY_LEFT,
 	mkb_KEY_RIGHT,
 
-	mkb_KEY_NUM0,
-	mkb_KEY_NUM1,
-	mkb_KEY_NUM2,
-	mkb_KEY_NUM3,
-	mkb_KEY_NUM4,
-	mkb_KEY_NUM5,
-	mkb_KEY_NUM6,
-	mkb_KEY_NUM7,
-	mkb_KEY_NUM8,
-	mkb_KEY_NUM9,
+	mkb_KEY_CTRL_L,
+	mkb_KEY_CTRL_R,
+	mkb_KEY_SHIFT_L,
+	mkb_KEY_SHIFT_R,
+	mkb_KEY_ALT_L,
+	mkb_KEY_ALT_R,
+	mkb_KEY_WIN_L,
+	mkb_KEY_WIN_R,
 
 	mkb_KEY_SPACE = ' ',
 	mkb_KEY_APOSTR = '\'',
@@ -97,7 +92,7 @@ enum
 	mkb_KEY_Z = 'Z',
 
 	mkb_KEY_LBRACK = '[',
-	mkb_KEY_BSLASh = '\\',
+	mkb_KEY_BSLASH = '\\',
 	mkb_KEY_RBRACK = ']',
 
 	mkb_KEY_BACKTICK = '`',
@@ -108,6 +103,17 @@ enum
 	mkb_KEY_NUMADD,
 	mkb_KEY_NUMENTER,
 	mkb_KEY_NUMPERIOD,
+
+	mkb_KEY_NUM0,
+	mkb_KEY_NUM1,
+	mkb_KEY_NUM2,
+	mkb_KEY_NUM3,
+	mkb_KEY_NUM4,
+	mkb_KEY_NUM5,
+	mkb_KEY_NUM6,
+	mkb_KEY_NUM7,
+	mkb_KEY_NUM8,
+	mkb_KEY_NUM9,
 
 	mkb_KEY_FN1,
 	mkb_KEY_FN2,
@@ -138,12 +144,10 @@ static const char* mkb_keyNames[mkb_KEY_COUNT] =
 	"",
 	"Capslock",
 	"Numlock",
+	"Scrolllock",
 
-	"Control",
-	"Shift",
-	"Alt",
-	"System",
 	"Escape",
+	"", "", "",
 	"Backspace",
 	"Tab",
 	"Enter",
@@ -159,16 +163,16 @@ static const char* mkb_keyNames[mkb_KEY_COUNT] =
 	"Left",
 	"Right",
 
-	"Num0",
-	"Num1",
-	"Num2",
-	"Num3",
-	"Num4",
-	"Num5",
-	"Num6",
-	"Num7",
-	"Num8",
-	"Num9",
+	"LeftControl",
+	"RightControl",
+	"LeftShift",
+	"RightShift",
+	"LeftAlt",
+	"RightAlt",
+	"LeftWin",
+	"RightWin",
+
+	"", "",
 
 	"Space",
 	"","","","","","",
@@ -236,6 +240,17 @@ static const char* mkb_keyNames[mkb_KEY_COUNT] =
 	"NumAdd",
 	"NumEnter",
 	"NumPeriod",
+
+	"Num0",
+	"Num1",
+	"Num2",
+	"Num3",
+	"Num4",
+	"Num5",
+	"Num6",
+	"Num7",
+	"Num8",
+	"Num9",
 
 	"F1",
 	"F2",
@@ -319,6 +334,8 @@ uint8_t mkb_lastKey(uint64_t index);
 bool mkb_capslockState(); 
 // Returns the system numberlock state
 bool mkb_numlockState(); 
+// Returns the system scrolllock state
+bool mkb_scrolllockState();
 
 // Frees memory and handles this library used
 void mkb_shutdown(); 
@@ -350,6 +367,7 @@ public:
 
 	bool capslockState() { return mkb_capslockState(); }
 	bool numlockState() { return mkb_numlockState(); }
+	bool scrolllockState() { return mkb_scrolllockState(); }
 
 	uint8_t lastKey(uint64_t index) { return mkb_lastKey(index); }
 

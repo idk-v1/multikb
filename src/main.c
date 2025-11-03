@@ -37,6 +37,8 @@ int main()
 						printf("Capslock State: %s\n", (mkb_capslockState()) ? "true" : "false");
 					else if (k == mkb_KEY_NUMLOCK)
 						printf("Numlock State: %s\n", (mkb_numlockState()) ? "true" : "false");
+					else if (k == mkb_KEY_SCROLLLOCK)
+						printf("Scrolllock State: %s\n", (mkb_scrolllockState()) ? "true" : "false");
 				}
 				if (mkb_keyUp(i, k))
 					printf("Keyboard [%d]: Released %s\n", i, mkb_keyNames[k]);
