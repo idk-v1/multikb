@@ -4,6 +4,8 @@
 #include <Windows.h>
 #include <hidsdi.h>
 
+#include <stdio.h>
+
 #include "multikb.h"
 
 static HWND msgWindow = NULL;
@@ -11,10 +13,9 @@ static HANDLE* devHndl = NULL;
 
 uint64_t _mkb_keyboardNum = 0;
 mkb_Keyboard** _mkb_keyboards = NULL;
-uint64_t _mkb_latestDev = -1;
 
 bool _mkb_isInit = false;
-uint8_t _mkb_lastEvent = mkb_DEVICE_NONE;
+uint8_t _mkb_event = mkb_DEVICE_NONE;
 
 
 static inline char* getDeviceName(HANDLE hndl)
@@ -99,8 +100,10 @@ static void mkb_addDevice(HANDLE hndl)
 		{
 			memset(kb, 0, sizeof(mkb_Keyboard));
 			kb->connected = true;
+			kb->firstSeen = true;
 			kb->keyCount = keyCount;
 			kb->name = name;
+			_mkb_event |= mkb_DEVICE_CONNECT;
 
 			// add to array
 			index = mkb_deviceCount() - 1;
@@ -115,13 +118,13 @@ static void mkb_addDevice(HANDLE hndl)
 		// update handle and change connected state
 		devHndl[index] = hndl;
 		_mkb_keyboards[index]->connected = true;
+		_mkb_keyboards[index]->firstSeen = false;
+		_mkb_event |= mkb_DEVICE_RECONNECT;
 
 		// discard new name
 		if (name)
 			free(name);
 	}
-
-	_mkb_latestDev = index;
 }
 
 static void mkb_removeDevice(HANDLE hndl)
@@ -134,10 +137,10 @@ static void mkb_removeDevice(HANDLE hndl)
 		_mkb_keyboards[index]->connected = false;
 		_mkb_keyboards[index]->lastKey = 0;
 		devHndl[index] = NULL;
-
-		_mkb_latestDev = index;
+		_mkb_event |= mkb_DEVICE_DISCONNECT;
 	}
 }
+
 static uint64_t keyFromRaw(RAWKEYBOARD key)
 {
 
@@ -157,6 +160,8 @@ static uint64_t keyFromRaw(RAWKEYBOARD key)
 	case VK_SCROLL: return mkb_KEY_SCROLLLOCK;
 
 	case VK_ESCAPE: return mkb_KEY_ESC;
+	case VK_PAUSE: return mkb_KEY_PAUSE;
+	case VK_CANCEL: return mkb_KEY_BREAK;
 	case VK_BACK: return mkb_KEY_BACKSP;
 	case VK_TAB: return mkb_KEY_TAB;
 	case VK_RETURN: return ((key.Flags & RI_KEY_E0) ? mkb_KEY_NUMENTER : mkb_KEY_ENTER);
@@ -196,19 +201,36 @@ static uint64_t keyFromRaw(RAWKEYBOARD key)
 
 	case VK_OEM_3: return mkb_KEY_BACKTICK;
 
+	case VK_MEDIA_PLAY_PAUSE: return mkb_KEY_MEDIA_PAUSE;
+	case VK_MEDIA_STOP: return mkb_KEY_MEDIA_STOP;
+	case VK_MEDIA_NEXT_TRACK: return mkb_KEY_MEDIA_NEXT;
+	case VK_MEDIA_PREV_TRACK: return mkb_KEY_MEDIA_PREV;
+	case VK_VOLUME_UP: return mkb_KEY_VOLUME_UP;
+	case VK_VOLUME_DOWN: return mkb_KEY_VOLUME_DOWN;
+	case VK_VOLUME_MUTE: return mkb_KEY_VOLUME_MUTE;
+
 	case VK_DIVIDE: return mkb_KEY_NUMDIV;
 	case VK_MULTIPLY: return mkb_KEY_NUMMUL;
 	case VK_SUBTRACT: return mkb_KEY_NUMSUB;
 	case VK_ADD: return mkb_KEY_NUMADD;
 	case VK_DECIMAL: return mkb_KEY_NUMPERIOD;
 
-	default:
-		printf("Unknown: %d\n", key.VKey);
-	}
+	case VK_BROWSER_HOME: return mb_KEY_BROWSER;
+	case VK_LAUNCH_MAIL: return mb_KEY_EMAIL;
+	case VK_LAUNCH_MEDIA_SELECT: return mb_KEY_MEDIA;
+	case VK_LAUNCH_APP1: return mb_KEY_APP1;
+	case VK_LAUNCH_APP2: return mb_KEY_APP2;
 
-	return 0; // Unknown
+	// Things like arrow keys send extra repeating 255s
+	case 255: return 0;
+
+	default:
+		printf("Unknown Key: %hu\n", key.VKey);
+		return 0; // unknown
+	}
 }
 
+// This entire function is optimized away somehow, I'm blaming __stdcall
 static void parseInput(HANDLE hndl)
 {
 	RAWINPUT data = { 0 };
@@ -217,13 +239,18 @@ static void parseInput(HANDLE hndl)
 
 	uint64_t key = keyFromRaw(data.data.keyboard);
 	uint64_t device = deviceIndexFromHandle(data.header.hDevice);
+
+	// "Fake" keys such as browser, email, media, app1 & 2 are sent by NULL device
+	// This is RAW INPUT microsoft
+	// I can't tell devices apart bc the device sending is NULL
+	// https://stackoverflow.com/questions/57552844/rawinputheader-hdevice-null-on-wm-input-for-laptop-trackpad
 	if (key == 0 || device == -1)
 		return;
 
+	_mkb_keyboards[device]->lastKey = (uint8_t)key;
+
 	// WHY IS THE DAMN ALT KEY A SYSTEM KEY BUT THE WINDOWS KEY ISNT
 	// WHY DOES IT HAVE A DIFFERENT MESSAGE
-	if (data.data.keyboard.Message == WM_KEYDOWN || data.data.keyboard.Message == WM_SYSKEYDOWN)
-		_mkb_keyboards[device]->lastKey = (uint8_t)key;
 	_mkb_keyboards[device]->keys[key].state = 
 		(data.data.keyboard.Message == WM_KEYDOWN || data.data.keyboard.Message == WM_SYSKEYDOWN);
 }
@@ -262,9 +289,10 @@ bool mkb_init()
 	msgWindow = NULL;
 	devHndl = NULL;
 
+	_mkb_event = mkb_DEVICE_NONE;
+
 	_mkb_keyboardNum = 0;
 	_mkb_keyboards = NULL;
-	_mkb_latestDev = -1;
 
 	// register window class
 	WNDCLASSA wc = { 0 };
@@ -300,9 +328,15 @@ uint8_t mkb_update()
 
 	// Update key states
 	for (uint64_t dev = 0; dev < mkb_deviceCount(); dev++)
+	{
 		for (uint64_t i = 0; i < mkb_KEY_COUNT; i++)
 			_mkb_keyboards[dev]->keys[i].lastState =
-				_mkb_keyboards[dev]->keys[i].state;
+			_mkb_keyboards[dev]->keys[i].state;
+		_mkb_keyboards[dev]->lastState = _mkb_keyboards[dev]->connected;
+		_mkb_keyboards[dev]->lastKey = 0;
+	}
+
+	_mkb_event = mkb_DEVICE_NONE;
 
 	MSG msg;
 	while (PeekMessageA(&msg, msgWindow, 0, 0, PM_REMOVE))
@@ -311,29 +345,12 @@ uint8_t mkb_update()
 		DispatchMessageA(&msg);
 	}
 
-	uint64_t newCount = mkb_deviceConnectedCount();
-	uint64_t newMaxCount = mkb_deviceCount();
-
-
-	_mkb_lastEvent = mkb_DEVICE_NONE;
-
-	if (newCount > count)
-	{
-		if (newMaxCount > maxCount)
-			_mkb_lastEvent = mkb_DEVICE_CONNECT;
-		else
-			_mkb_lastEvent = mkb_DEVICE_RECONNECT;
-	}
-	else if (newCount < count)
-		_mkb_lastEvent = mkb_DEVICE_DISCONNECT;
-
-
-	return _mkb_lastEvent;
+	return _mkb_event;
 }
 
-uint8_t mkb_getLastEvent()
+uint8_t mkb_getEvent()
 {
-	return _mkb_lastEvent;
+	return _mkb_event;
 }
 
 uint64_t mkb_deviceCount()
@@ -351,9 +368,29 @@ uint64_t mkb_deviceConnectedCount()
 	return count;
 }
 
-uint64_t mkb_getLatestDevice()
+bool mkb_deviceState(uint64_t index)
 {
-	return _mkb_latestDev;
+	return _mkb_keyboards[index]->connected;
+}
+
+bool mkb_deviceLastState(uint64_t index)
+{
+	return _mkb_keyboards[index]->lastState;
+}
+
+bool mkb_wasDeviceAdded(uint64_t index)
+{
+	return mkb_deviceState(index) && !mkb_deviceLastState(index) && _mkb_keyboards[index]->firstSeen;
+}
+
+bool mkb_wasDeviceReAdded(uint64_t index)
+{
+	return mkb_deviceState(index) && !mkb_deviceLastState(index) && !_mkb_keyboards[index]->firstSeen;
+}
+
+bool mkb_wasDeviceRemoved(uint64_t index)
+{
+	return !mkb_deviceState(index) && mkb_deviceLastState(index);
 }
 
 uint64_t mkb_getNthDevice(uint64_t index)
@@ -452,5 +489,4 @@ void mkb_shutdown()
 
 	_mkb_keyboardNum = 0;
 	_mkb_keyboards = NULL;
-	_mkb_latestDev = -1;
 }

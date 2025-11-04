@@ -19,6 +19,8 @@ enum
 	mkb_KEY_SCROLLLOCK,
 
 	mkb_KEY_ESC,
+	mkb_KEY_PAUSE,
+	mkb_KEY_BREAK,
 	mkb_KEY_BACKSP = '\b',
 	mkb_KEY_TAB = '\t',
 	mkb_KEY_ENTER = '\n',
@@ -42,7 +44,6 @@ enum
 	mkb_KEY_ALT_R,
 	mkb_KEY_WIN_L,
 	mkb_KEY_WIN_R,
-
 	mkb_KEY_MENU,
 
 	mkb_KEY_SPACE = ' ',
@@ -99,6 +100,14 @@ enum
 
 	mkb_KEY_BACKTICK = '`',
 
+	mkb_KEY_MEDIA_PAUSE,
+	mkb_KEY_MEDIA_STOP,
+	mkb_KEY_MEDIA_NEXT,
+	mkb_KEY_MEDIA_PREV,
+	mkb_KEY_VOLUME_UP,
+	mkb_KEY_VOLUME_DOWN,
+	mkb_KEY_VOLUME_MUTE,
+
 	mkb_KEY_NUMDIV,
 	mkb_KEY_NUMMUL,
 	mkb_KEY_NUMSUB,
@@ -142,26 +151,34 @@ enum
 	mkb_KEY_FN23,
 	mkb_KEY_FN24,
 
+	mb_KEY_BROWSER,
+	mb_KEY_EMAIL,
+	mb_KEY_MEDIA,
+	mb_KEY_APP1,
+	mb_KEY_APP2,
+
 	mkb_KEY_COUNT, // Some spaces were skipped, but this is easier
 };
 
 enum
 {
-	mkb_DEVICE_NONE,
-	mkb_DEVICE_CONNECT,
-	mkb_DEVICE_RECONNECT,
-	mkb_DEVICE_DISCONNECT,
+	mkb_DEVICE_NONE       = 0,
+	mkb_DEVICE_CONNECT    = 1,
+	mkb_DEVICE_RECONNECT  = 2,
+	mkb_DEVICE_DISCONNECT = 4,
 };
 
 static const char* mkb_keyNames[mkb_KEY_COUNT] =
 {
-	"",
+	"NULL",
 	"Capslock",
 	"Numlock",
-	"Scrolllock",
+	"Scroll Lock",
 
 	"Escape",
-	"", "", "",
+	"Pause",
+	"Break", 
+	"", 
 	"Backspace",
 	"Tab",
 	"Enter",
@@ -169,23 +186,22 @@ static const char* mkb_keyNames[mkb_KEY_COUNT] =
 	"End",
 	"Home",
 	"Insert",
-	"PrintScreen",
-	"PageUp",
-	"PageDown",
+	"Print Screen",
+	"Page Up",
+	"Page Down",
 	"Up",
 	"Down",
 	"Left",
 	"Right",
 
-	"LeftControl",
-	"RightControl",
-	"LeftShift",
-	"RightShift",
-	"LeftAlt",
-	"RightAlt",
-	"LeftWin",
-	"RightWin",
-
+	"Left Control",
+	"Right Control",
+	"Left Shift",
+	"Right Shift",
+	"Left Alt",
+	"Right Alt",
+	"Left Win",
+	"Right Win",
 	"Menu",
 
 	"",
@@ -250,23 +266,31 @@ static const char* mkb_keyNames[mkb_KEY_COUNT] =
 
 	"Backtick",
 
-	"NumDivide",
-	"NumMultiply",
-	"NumSubtract",
-	"NumAdd",
-	"NumEnter",
-	"NumPeriod",
+	"Media Play/Pause",
+	"Media Stop",
+	"Media Next",
+	"Media Prev",
+	"Volume Up",
+	"Volume Down",
+	"Volume Mute",
 
-	"Num0",
-	"Num1",
-	"Num2",
-	"Num3",
-	"Num4",
-	"Num5",
-	"Num6",
-	"Num7",
-	"Num8",
-	"Num9",
+	"Num Divide",
+	"Num Multiply",
+	"Num Subtract",
+	"Num Add",
+	"Num Enter",
+	"Num Period",
+
+	"Num 0",
+	"Num 1",
+	"Num 2",
+	"Num 3",
+	"Num 4",
+	"Num 5",
+	"Num 6",
+	"Num 7",
+	"Num 8",
+	"Num 9",
 
 	"F1",
 	"F2",
@@ -291,7 +315,13 @@ static const char* mkb_keyNames[mkb_KEY_COUNT] =
 	"F21",
 	"F22",
 	"F23",
-	"F24"
+	"F24",
+
+	"Launch Browser",
+	"Launch Email",
+	"Launch Media",
+	"Launch App 1",
+	"Launch App 2",
 };
 
 typedef struct mkb_Key
@@ -303,18 +333,21 @@ typedef struct mkb_Key
 typedef struct mkb_Keyboard
 {
 	mkb_Key keys[mkb_KEY_COUNT];
+
 	bool connected;
+	bool lastState;
+	bool firstSeen;
 	uint8_t lastKey;
+
 	uint64_t keyCount;
 	char* name;
 } mkb_Keyboard;
 
 extern uint64_t _mkb_keyboardNum;
 extern mkb_Keyboard** _mkb_keyboards;
-extern uint64_t _mkb_latestDev;
 
 extern bool _mkb_isInit;
-extern uint8_t _mkb_lastEvent;
+extern uint8_t _mkb_event;
 
 // Initializes library (Will not work without this)
 bool mkb_init(); 
@@ -322,7 +355,7 @@ bool mkb_init();
 // Updates the keyboard states, then returns if a device was connected or disconnected
 uint8_t mkb_update(); 
 // Returns if a device was connected or disconnected
-uint8_t mkb_getLastEvent(); 
+uint8_t mkb_getEvent(); 
 
 // Returns total number of devices that have connected, but may not be connected
 // Should be used for iterating through all devices
@@ -331,8 +364,16 @@ uint64_t mkb_deviceCount();
 // Should NOT be used for iterating through all devices
 // Returns number of currently connected devices
 uint64_t mkb_deviceConnectedCount(); 
-// Returns the index of the last device to connect or disconnect
-uint64_t mkb_getLatestDevice(); 
+
+// Returns if a device is connected
+bool mkb_deviceState(uint64_t index);
+
+// Returns if a device was connected last
+bool mkb_deviceLastState(uint64_t index);
+
+bool mkb_wasDeviceAdded(uint64_t index);
+bool mkb_wasDeviceReAdded(uint64_t index);
+bool mkb_wasDeviceRemoved(uint64_t index);
 
 // Returns the index of the next device
 // Used if you need to reorder things using the keyboards and need to refind the device indexes again

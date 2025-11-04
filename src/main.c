@@ -2,46 +2,65 @@
 
 #include "multikb.h"
 
+#define PRINTBOOL(cond) ((cond) ? "true" : "false")
+
 int main()
 {
-	bool running = mkb_init();
+	bool running = mkb_init(true);
 
 	printf("Devices: %llu\n", mkb_deviceConnectedCount());
+	for (int i = 0; i < mkb_deviceCount(); i++)
+	{
+		if (mkb_deviceState(i))
+			printf("[%d]: \"%s\"\n", i, mkb_deviceName(i));
+	}
 
 	while (running)
 	{
 		mkb_update();
-		switch (mkb_getLastEvent())
+		uint8_t event = mkb_getEvent();
+		if (event)
 		{
-		case mkb_DEVICE_CONNECT:
-			printf("Device %llu Connected\n", mkb_getLatestDevice());
-			break;
-
-		case mkb_DEVICE_RECONNECT:
-			printf("Device %llu Reconnected\n", mkb_getLatestDevice());
-			break;
-
-		case mkb_DEVICE_DISCONNECT:
-			printf("Device %llu Disconnected\n", mkb_getLatestDevice());
-			break;
+			if (event & mkb_DEVICE_CONNECT)
+			{
+				for (uint64_t i = 0; i < mkb_deviceCount(); i++)
+					if (mkb_wasDeviceAdded(i))
+						printf("Device %llu Connected: \"%s\"\n", i, mkb_deviceName(i));
+			}
+			if (event & mkb_DEVICE_RECONNECT)
+			{
+				for (uint64_t i = 0; i < mkb_deviceCount(); i++)
+					if (mkb_wasDeviceReAdded(i))
+						printf("Device %llu Reconnected: \"%s\"\n", i, mkb_deviceName(i));
+			}
+			if (event & mkb_DEVICE_DISCONNECT)
+			{
+				for (uint64_t i = 0; i < mkb_deviceCount(); i++)
+					if (mkb_wasDeviceRemoved(i))
+						printf("Device %llu Disconnected: \"%s\"\n", i, mkb_deviceName(i));
+			}
 		}
 
 		for (int i = 0; i < mkb_deviceCount(); i++)
 		{
-			for (int k = 0; k < mkb_KEY_COUNT; k++)
+			if (mkb_deviceState(i))
 			{
-				if (mkb_keyDown(i, k))
+				uint8_t key = mkb_lastKey(i);
+				if (key)
 				{
-					printf("Keyboard [%d]: Pressed %s\n", i, mkb_keyNames[k]);
-					if (k == mkb_KEY_CAPSLOCK)
-						printf("Capslock State: %s\n", (mkb_capslockState()) ? "true" : "false");
-					else if (k == mkb_KEY_NUMLOCK)
-						printf("Numlock State: %s\n", (mkb_numlockState()) ? "true" : "false");
-					else if (k == mkb_KEY_SCROLLLOCK)
-						printf("Scrolllock State: %s\n", (mkb_scrolllockState()) ? "true" : "false");
+					if (mkb_keyDown(i, key))
+					{
+						printf("Keyboard [%d]: Pressed %s\n", i, mkb_keyNames[key]);
+						switch (key)
+						{
+						case mkb_KEY_CAPSLOCK:   printf("%s State: %s\n", mkb_keyNames[key], PRINTBOOL(mkb_capslockState()));   break;
+						case mkb_KEY_NUMLOCK:    printf("%s State: %s\n", mkb_keyNames[key], PRINTBOOL(mkb_numlockState()));    break;
+						case mkb_KEY_SCROLLLOCK: printf("%s State: %s\n", mkb_keyNames[key], PRINTBOOL(mkb_scrolllockState())); break;
+						}
+					}
+					if (mkb_keyUp(i, key))
+						printf("Keyboard [%d]: Released %s\n", i, mkb_keyNames[key]);
 				}
-				if (mkb_keyUp(i, k))
-					printf("Keyboard [%d]: Released %s\n", i, mkb_keyNames[k]);
 			}
 		}
 
