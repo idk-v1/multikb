@@ -147,7 +147,7 @@ static uint64_t keyFromRaw(RAWKEYBOARD key)
 		return key.VKey - '0' + mkb_KEY_0;
 	if (key.VKey >= VK_NUMPAD0 && key.VKey <= VK_NUMPAD9)
 		return key.VKey - VK_NUMPAD0 + mkb_KEY_NUM0;
-	if (key.VKey >= VK_F1 && key.VKey <= VK_F12)
+	if (key.VKey >= VK_F1 && key.VKey <= VK_F24)
 		return key.VKey - VK_F1 + mkb_KEY_FN1;
 
 	switch (key.VKey)
@@ -178,6 +178,8 @@ static uint64_t keyFromRaw(RAWKEYBOARD key)
 	case VK_LWIN: return mkb_KEY_WIN_L;
 	case VK_RWIN: return mkb_KEY_WIN_R;
 
+	case VK_APPS: return mkb_KEY_MENU;
+
 	case VK_SPACE: return mkb_KEY_SPACE;
 	case VK_OEM_7: return mkb_KEY_APOSTR;
 	case VK_OEM_COMMA: return mkb_KEY_COMMA;
@@ -199,6 +201,9 @@ static uint64_t keyFromRaw(RAWKEYBOARD key)
 	case VK_SUBTRACT: return mkb_KEY_NUMSUB;
 	case VK_ADD: return mkb_KEY_NUMADD;
 	case VK_DECIMAL: return mkb_KEY_NUMPERIOD;
+
+	default:
+		printf("Unknown: %d\n", key.VKey);
 	}
 
 	return 0; // Unknown

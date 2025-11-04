@@ -43,6 +43,8 @@ enum
 	mkb_KEY_WIN_L,
 	mkb_KEY_WIN_R,
 
+	mkb_KEY_MENU,
+
 	mkb_KEY_SPACE = ' ',
 	mkb_KEY_APOSTR = '\'',
 	mkb_KEY_COMMA = ',',
@@ -127,6 +129,18 @@ enum
 	mkb_KEY_FN10,
 	mkb_KEY_FN11,
 	mkb_KEY_FN12,
+	mkb_KEY_FN13,
+	mkb_KEY_FN14,
+	mkb_KEY_FN15,
+	mkb_KEY_FN16,
+	mkb_KEY_FN17,
+	mkb_KEY_FN18,
+	mkb_KEY_FN19,
+	mkb_KEY_FN20,
+	mkb_KEY_FN21,
+	mkb_KEY_FN22,
+	mkb_KEY_FN23,
+	mkb_KEY_FN24,
 
 	mkb_KEY_COUNT, // Some spaces were skipped, but this is easier
 };
@@ -172,7 +186,9 @@ static const char* mkb_keyNames[mkb_KEY_COUNT] =
 	"LeftWin",
 	"RightWin",
 
-	"", "",
+	"Menu",
+
+	"",
 
 	"Space",
 	"","","","","","",
@@ -263,7 +279,19 @@ static const char* mkb_keyNames[mkb_KEY_COUNT] =
 	"F9",
 	"F10",
 	"F11",
-	"F12"
+	"F12",
+	"F13",
+	"F14",
+	"F15",
+	"F16",
+	"F17",
+	"F18",
+	"F19",
+	"F20",
+	"F21",
+	"F22",
+	"F23",
+	"F24"
 };
 
 typedef struct mkb_Key
