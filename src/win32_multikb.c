@@ -215,11 +215,11 @@ static uint64_t keyFromRaw(RAWKEYBOARD key)
 	case VK_ADD: return mkb_KEY_NUMADD;
 	case VK_DECIMAL: return mkb_KEY_NUMPERIOD;
 
-	case VK_BROWSER_HOME: return mb_KEY_BROWSER;
-	case VK_LAUNCH_MAIL: return mb_KEY_EMAIL;
-	case VK_LAUNCH_MEDIA_SELECT: return mb_KEY_MEDIA;
-	case VK_LAUNCH_APP1: return mb_KEY_APP1;
-	case VK_LAUNCH_APP2: return mb_KEY_APP2;
+	//case VK_BROWSER_HOME: return mb_KEY_BROWSER;
+	//case VK_LAUNCH_MAIL: return mb_KEY_EMAIL;
+	//case VK_LAUNCH_MEDIA_SELECT: return mb_KEY_MEDIA;
+	//case VK_LAUNCH_APP1: return mb_KEY_APP1;
+	//case VK_LAUNCH_APP2: return mb_KEY_APP2;
 
 	// Things like arrow keys send extra repeating 255s
 	case 255: return 0;

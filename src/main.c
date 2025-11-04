@@ -53,9 +53,21 @@ int main()
 						printf("Keyboard [%d]: Pressed %s\n", i, mkb_keyNames[key]);
 						switch (key)
 						{
-						case mkb_KEY_CAPSLOCK:   printf("%s State: %s\n", mkb_keyNames[key], PRINTBOOL(mkb_capslockState()));   break;
-						case mkb_KEY_NUMLOCK:    printf("%s State: %s\n", mkb_keyNames[key], PRINTBOOL(mkb_numlockState()));    break;
-						case mkb_KEY_SCROLLLOCK: printf("%s State: %s\n", mkb_keyNames[key], PRINTBOOL(mkb_scrolllockState())); break;
+						case mkb_KEY_CAPSLOCK:   
+							printf("%s State: %s\n", 
+								mkb_keyNames[key], 
+								PRINTBOOL(mkb_capslockState()));   
+							break;
+						case mkb_KEY_NUMLOCK:    
+							printf("%s State: %s\n", 
+								mkb_keyNames[key], 
+								PRINTBOOL(mkb_numlockState()));    
+							break;
+						case mkb_KEY_SCROLLLOCK: 
+							printf("%s State: %s\n",
+								mkb_keyNames[key], 
+								PRINTBOOL(mkb_scrolllockState())); 
+							break;
 						}
 					}
 					if (mkb_keyUp(i, key))

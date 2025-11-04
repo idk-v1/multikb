@@ -151,11 +151,11 @@ enum
 	mkb_KEY_FN23,
 	mkb_KEY_FN24,
 
-	mb_KEY_BROWSER,
-	mb_KEY_EMAIL,
-	mb_KEY_MEDIA,
-	mb_KEY_APP1,
-	mb_KEY_APP2,
+	//mb_KEY_BROWSER,
+	//mb_KEY_EMAIL,
+	//mb_KEY_MEDIA,
+	//mb_KEY_APP1,
+	//mb_KEY_APP2,
 
 	mkb_KEY_COUNT, // Some spaces were skipped, but this is easier
 };
@@ -317,11 +317,11 @@ static const char* mkb_keyNames[mkb_KEY_COUNT] =
 	"F23",
 	"F24",
 
-	"Launch Browser",
-	"Launch Email",
-	"Launch Media",
-	"Launch App 1",
-	"Launch App 2",
+	//"Launch Browser",
+	//"Launch Email",
+	//"Launch Media",
+	//"Launch App 1",
+	//"Launch App 2",
 };
 
 typedef struct mkb_Key
