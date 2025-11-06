@@ -340,7 +340,8 @@ typedef struct mkb_Keyboard
 	uint8_t lastKey;
 
 	uint64_t keyCount;
-	char* name;
+	char* devName;
+	char* displayName;
 } mkb_Keyboard;
 
 extern uint64_t _mkb_keyboardNum;
@@ -349,10 +350,10 @@ extern mkb_Keyboard** _mkb_keyboards;
 extern bool _mkb_isInit;
 
 // Initializes library (Will not work without this)
-bool mkb_init(); 
+bool mkb_init(void); 
 
 // Updates the keyboard states
-void mkb_update(); 
+void mkb_update(void); 
 
 // Returns the event of the device index
 // Possible returns:
@@ -364,11 +365,11 @@ uint8_t mkb_getDeviceEvent(uint64_t index);
 
 // Returns total number of devices that have connected, but may not be connected
 // Should be used for iterating through all devices
-uint64_t mkb_deviceCount(); 
+uint64_t mkb_deviceCount(void); 
 
 // Should NOT be used for iterating through all devices
 // Returns number of currently connected devices
-uint64_t mkb_deviceConnectedCount(); 
+uint64_t mkb_deviceConnectedCount(void); 
 
 // Returns if a device is connected
 bool mkb_deviceState(uint64_t index);
@@ -398,14 +399,14 @@ uint8_t mkb_lastKey(uint64_t index);
 // These are global states, so they have to be different
 
 // Returns the system capslock state
-bool mkb_capslockState(); 
+bool mkb_capslockState(void); 
 // Returns the system numberlock state
-bool mkb_numlockState(); 
+bool mkb_numlockState(void); 
 // Returns the system scrolllock state
-bool mkb_scrolllockState();
+bool mkb_scrolllockState(void);
 
 // Frees memory and handles this library used
-void mkb_shutdown(); 
+void mkb_shutdown(void); 
 
 
 #ifdef __cplusplus

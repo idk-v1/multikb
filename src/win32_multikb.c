@@ -3,6 +3,8 @@
 #define NO_STRICT
 #include <Windows.h>
 #include <hidsdi.h>
+#include <WbemIdl.h>
+// link with "wbemuuid.lib"
 
 #include <stdio.h>
 
@@ -16,6 +18,71 @@ mkb_Keyboard** _mkb_keyboards = NULL;
 
 bool _mkb_isInit = false;
 
+IWbemLocator* loc = NULL;
+IWbemServices* svc = NULL;
+
+
+static char* getDeviceDisplayName(char* name)
+{
+	size_t nameLen = strlen(name);
+	wchar_t* nameTemp = malloc((nameLen + 1) * sizeof(wchar_t));
+	if (!nameTemp)
+		return NULL;
+	int i = 0;
+	for (; i < nameLen; i++)
+	{
+		if (name[4 + i] == '#')
+			nameTemp[i] = '\\';
+		else if (name[4 + i] == '{')
+		{
+			i--;
+			break;
+		}
+		else
+			nameTemp[i] = name[4 + i];
+	}
+	nameTemp[i] = '\0';
+
+	IEnumWbemClassObject* pEnum = NULL;
+	HRESULT hr = svc->lpVtbl->ExecQuery(svc, L"WQL", 
+		L"SELECT * FROM Win32_PnPEntity WHERE PNPClass = 'Keyboard'", 
+		WBEM_FLAG_RETURN_IMMEDIATELY | WBEM_FLAG_FORWARD_ONLY, NULL, &pEnum);
+	if (FAILED(hr))
+	{
+		free(nameTemp);
+		return NULL;
+	}
+
+	char* nameRet = NULL;
+	IWbemClassObject* pclsObj = NULL;
+	ULONG ret = 0;
+	while (!nameRet)
+	{
+		HRESULT hr = pEnum->lpVtbl->Next(pEnum, WBEM_INFINITE, 1, &pclsObj, &ret);
+		if (ret == 0)
+			break;
+		VARIANT var = { 0 };
+
+		hr = pclsObj->lpVtbl->Get(pclsObj, L"DeviceID", 0, &var, 0, 0);
+		if (lstrcmpiW(var.bstrVal, nameTemp) == 0)
+		{
+			hr = pclsObj->lpVtbl->Get(pclsObj, L"Name", 0, &var, 0, 0);
+			int len = lstrlenW(var.bstrVal);
+			nameRet = malloc(len + 1);
+			if (nameRet)
+			{
+				for (int i = 0; i <= len; i++)
+					nameRet[i] = (char)var.bstrVal[i];
+			}
+		}
+		pclsObj->lpVtbl->Release(pclsObj);
+	}
+
+	free(nameTemp);
+	pEnum->lpVtbl->Release(pEnum);
+
+	return nameRet;
+}
 
 static inline char* getDeviceName(HANDLE hndl)
 {
@@ -55,7 +122,7 @@ static inline uint64_t deviceHandleFromName(const char* name)
 {
 	for (uint64_t i = 0; i < mkb_deviceCount(); i++)
 		if (_mkb_keyboards[i]->connected == 0) // previously connected and much cheaper than strcmp
-			if (strcmp(name, _mkb_keyboards[i]->name) == 0)
+			if (strcmp(name, _mkb_keyboards[i]->devName) == 0)
 				return i;
 
 	return -1;
@@ -101,7 +168,8 @@ static void mkb_addDevice(HANDLE hndl)
 			kb->connected = true;
 			kb->firstSeen = true;
 			kb->keyCount = keyCount;
-			kb->name = name;
+			kb->devName = name;
+			kb->displayName = getDeviceDisplayName(name);
 
 			// add to array
 			index = mkb_deviceCount() - 1;
@@ -275,7 +343,64 @@ static LRESULT WINAPI mkb_wndproc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
 }
 
 
-bool mkb_init()
+static bool initWMI(void)
+{
+	HRESULT hr = CoInitializeEx(0, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE);
+	if (FAILED(hr))
+	{
+		return false;
+	}
+	
+	hr = CoInitializeSecurity(NULL, -1, NULL, NULL, RPC_C_AUTHN_LEVEL_DEFAULT,
+		RPC_C_IMP_LEVEL_IMPERSONATE, NULL, EOAC_NONE, NULL);
+	if (FAILED(hr))
+	{
+		//CoUninitialize();
+		return false;
+	}
+	
+	hr = CoCreateInstance(&CLSID_WbemLocator, NULL, CLSCTX_INPROC_SERVER,
+		&IID_IWbemLocator, &loc);
+	if (FAILED(hr))
+	{
+		//CoUninitialize();
+		return false;
+	}
+
+	hr = loc->lpVtbl->ConnectServer(loc, L"root\\CIMV2", NULL, NULL, NULL, 0, NULL, NULL, &svc);
+	if (FAILED(hr))
+	{
+		//CoUninitialize();
+		loc->lpVtbl->Release(loc);
+		loc = NULL;
+		return false;
+	}
+
+	hr = CoSetProxyBlanket((IUnknown*)svc, RPC_C_AUTHN_WINNT, RPC_C_AUTHZ_NONE, NULL,
+		RPC_C_AUTHN_LEVEL_CALL, RPC_C_IMP_LEVEL_IMPERSONATE, NULL, EOAC_NONE);
+	if (FAILED(hr))
+	{
+		svc->lpVtbl->Release(svc);
+		svc = NULL;
+		loc->lpVtbl->Release(loc);
+		loc = NULL;
+		//CoUninitialize();
+		return false;
+	}
+
+	return true;
+}
+
+static void shutdownWMI(void)
+{
+	if (svc)
+		svc->lpVtbl->Release(svc);
+	if (loc)
+		loc->lpVtbl->Release(loc);
+	CoUninitialize();
+}
+
+bool mkb_init(void)
 {
 	if (_mkb_isInit)
 		return false;
@@ -287,6 +412,9 @@ bool mkb_init()
 
 	_mkb_keyboardNum = 0;
 	_mkb_keyboards = NULL;
+
+	if (!initWMI())
+		return false;
 
 	// register window class
 	WNDCLASSA wc = { 0 };
@@ -312,7 +440,7 @@ bool mkb_init()
 	return true;
 }
 
-void mkb_update()
+void mkb_update(void)
 {
 	if (!_mkb_isInit)
 		return;
@@ -352,12 +480,12 @@ uint8_t mkb_getDeviceEvent(uint64_t index)
 	return mkb_DEVICE_NONE;
 }
 
-uint64_t mkb_deviceCount()
+uint64_t mkb_deviceCount(void)
 {
 	return _mkb_keyboardNum;
 }
 
-uint64_t mkb_deviceConnectedCount()
+uint64_t mkb_deviceConnectedCount(void)
 {
 	uint64_t count = 0;
 	for (uint64_t i = 0; i < mkb_deviceCount(); i++)
@@ -387,7 +515,7 @@ uint64_t mkb_getNthDevice(uint64_t index)
 const char* mkb_deviceName(uint64_t index)
 {
 	if (index < mkb_deviceCount())
-		return _mkb_keyboards[index]->name;
+		return _mkb_keyboards[index]->displayName;
 	return NULL;
 }
 
@@ -428,22 +556,22 @@ uint8_t mkb_lastKey(uint64_t index)
 	return 0;
 }
 
-bool mkb_capslockState()
+bool mkb_capslockState(void)
 {
 	return ((GetKeyState(VK_CAPITAL) & 0x0001));
 }
 
-bool mkb_numlockState()
+bool mkb_numlockState(void)
 {
 	return ((GetKeyState(VK_NUMLOCK) & 0x0001));
 }
 
-bool mkb_scrolllockState()
+bool mkb_scrolllockState(void)
 {
 	return ((GetKeyState(VK_SCROLL) & 0x0001));
 }
 
-void mkb_shutdown()
+void mkb_shutdown(void)
 {
 	if (!_mkb_isInit)
 		return;
@@ -460,8 +588,10 @@ void mkb_shutdown()
 	for (uint64_t i = 0; i < mkb_deviceCount(); i++)
 	{
 #pragma warning (disable: 6001) // Bad visual studio
-		if (_mkb_keyboards[i]->name)
-			free(_mkb_keyboards[i]->name);
+		if (_mkb_keyboards[i]->devName)
+			free(_mkb_keyboards[i]->devName);
+		if (_mkb_keyboards[i]->displayName)
+			free(_mkb_keyboards[i]->displayName);
 		if (_mkb_keyboards[i])
 			free(_mkb_keyboards[i]);
 	}
@@ -470,4 +600,6 @@ void mkb_shutdown()
 
 	_mkb_keyboardNum = 0;
 	_mkb_keyboards = NULL;
+
+	shutdownWMI();
 }
