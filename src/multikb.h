@@ -347,15 +347,20 @@ extern uint64_t _mkb_keyboardNum;
 extern mkb_Keyboard** _mkb_keyboards;
 
 extern bool _mkb_isInit;
-extern uint8_t _mkb_event;
 
 // Initializes library (Will not work without this)
 bool mkb_init(); 
 
-// Updates the keyboard states, then returns if a device was connected or disconnected
-uint8_t mkb_update(); 
-// Returns if a device was connected or disconnected
-uint8_t mkb_getEvent(); 
+// Updates the keyboard states
+void mkb_update(); 
+
+// Returns the event of the device index
+// Possible returns:
+// mkb_DEVICE_NONE
+// mkb_DEVICE_CONNECT
+// mkb_DEVICE_RECONNECT
+// mkb_DEVICE_DISCONNECT
+uint8_t mkb_getDeviceEvent(uint64_t index);
 
 // Returns total number of devices that have connected, but may not be connected
 // Should be used for iterating through all devices
@@ -367,13 +372,6 @@ uint64_t mkb_deviceConnectedCount();
 
 // Returns if a device is connected
 bool mkb_deviceState(uint64_t index);
-
-// Returns if a device was connected last
-bool mkb_deviceLastState(uint64_t index);
-
-bool mkb_wasDeviceAdded(uint64_t index);
-bool mkb_wasDeviceReAdded(uint64_t index);
-bool mkb_wasDeviceRemoved(uint64_t index);
 
 // Returns the index of the next device
 // Used if you need to reorder things using the keyboards and need to refind the device indexes again

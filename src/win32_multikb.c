@@ -15,7 +15,6 @@ uint64_t _mkb_keyboardNum = 0;
 mkb_Keyboard** _mkb_keyboards = NULL;
 
 bool _mkb_isInit = false;
-uint8_t _mkb_event = mkb_DEVICE_NONE;
 
 
 static inline char* getDeviceName(HANDLE hndl)
@@ -103,7 +102,6 @@ static void mkb_addDevice(HANDLE hndl)
 			kb->firstSeen = true;
 			kb->keyCount = keyCount;
 			kb->name = name;
-			_mkb_event |= mkb_DEVICE_CONNECT;
 
 			// add to array
 			index = mkb_deviceCount() - 1;
@@ -119,7 +117,6 @@ static void mkb_addDevice(HANDLE hndl)
 		devHndl[index] = hndl;
 		_mkb_keyboards[index]->connected = true;
 		_mkb_keyboards[index]->firstSeen = false;
-		_mkb_event |= mkb_DEVICE_RECONNECT;
 
 		// discard new name
 		if (name)
@@ -137,7 +134,6 @@ static void mkb_removeDevice(HANDLE hndl)
 		_mkb_keyboards[index]->connected = false;
 		_mkb_keyboards[index]->lastKey = 0;
 		devHndl[index] = NULL;
-		_mkb_event |= mkb_DEVICE_DISCONNECT;
 	}
 }
 
@@ -289,8 +285,6 @@ bool mkb_init()
 	msgWindow = NULL;
 	devHndl = NULL;
 
-	_mkb_event = mkb_DEVICE_NONE;
-
 	_mkb_keyboardNum = 0;
 	_mkb_keyboards = NULL;
 
@@ -318,10 +312,10 @@ bool mkb_init()
 	return true;
 }
 
-uint8_t mkb_update()
+void mkb_update()
 {
 	if (!_mkb_isInit)
-		return mkb_DEVICE_NONE;
+		return;
 
 	uint64_t count = mkb_deviceConnectedCount();
 	uint64_t maxCount = mkb_deviceCount();
@@ -336,21 +330,26 @@ uint8_t mkb_update()
 		_mkb_keyboards[dev]->lastKey = 0;
 	}
 
-	_mkb_event = mkb_DEVICE_NONE;
-
 	MSG msg;
 	while (PeekMessageA(&msg, msgWindow, 0, 0, PM_REMOVE))
 	{
 		TranslateMessage(&msg);
 		DispatchMessageA(&msg);
 	}
-
-	return _mkb_event;
 }
 
-uint8_t mkb_getEvent()
+uint8_t mkb_getDeviceEvent(uint64_t index)
 {
-	return _mkb_event;
+	if (index < mkb_deviceCount())
+	{
+		if (_mkb_keyboards[index]->connected && !_mkb_keyboards[index]->lastState && _mkb_keyboards[index]->firstSeen)
+			return mkb_DEVICE_CONNECT;
+		if (_mkb_keyboards[index]->connected && !_mkb_keyboards[index]->lastState && !_mkb_keyboards[index]->firstSeen)
+			return mkb_DEVICE_RECONNECT;
+		if (!_mkb_keyboards[index]->connected && _mkb_keyboards[index]->lastState)
+			return mkb_DEVICE_DISCONNECT;
+	}
+	return mkb_DEVICE_NONE;
 }
 
 uint64_t mkb_deviceCount()
@@ -370,27 +369,9 @@ uint64_t mkb_deviceConnectedCount()
 
 bool mkb_deviceState(uint64_t index)
 {
-	return _mkb_keyboards[index]->connected;
-}
-
-bool mkb_deviceLastState(uint64_t index)
-{
-	return _mkb_keyboards[index]->lastState;
-}
-
-bool mkb_wasDeviceAdded(uint64_t index)
-{
-	return mkb_deviceState(index) && !mkb_deviceLastState(index) && _mkb_keyboards[index]->firstSeen;
-}
-
-bool mkb_wasDeviceReAdded(uint64_t index)
-{
-	return mkb_deviceState(index) && !mkb_deviceLastState(index) && !_mkb_keyboards[index]->firstSeen;
-}
-
-bool mkb_wasDeviceRemoved(uint64_t index)
-{
-	return !mkb_deviceState(index) && mkb_deviceLastState(index);
+	if (index < mkb_deviceCount())
+		return _mkb_keyboards[index]->connected;
+	return false;
 }
 
 uint64_t mkb_getNthDevice(uint64_t index)

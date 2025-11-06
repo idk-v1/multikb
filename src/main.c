@@ -18,26 +18,21 @@ int main()
 	while (running)
 	{
 		mkb_update();
-		uint8_t event = mkb_getEvent();
-		if (event)
+		for (uint64_t i = 0; i < mkb_deviceCount(); i++)
 		{
-			if (event & mkb_DEVICE_CONNECT)
+			switch (mkb_getDeviceEvent(i))
 			{
-				for (uint64_t i = 0; i < mkb_deviceCount(); i++)
-					if (mkb_wasDeviceAdded(i))
-						printf("Device %llu Connected: \"%s\"\n", i, mkb_deviceName(i));
-			}
-			if (event & mkb_DEVICE_RECONNECT)
-			{
-				for (uint64_t i = 0; i < mkb_deviceCount(); i++)
-					if (mkb_wasDeviceReAdded(i))
-						printf("Device %llu Reconnected: \"%s\"\n", i, mkb_deviceName(i));
-			}
-			if (event & mkb_DEVICE_DISCONNECT)
-			{
-				for (uint64_t i = 0; i < mkb_deviceCount(); i++)
-					if (mkb_wasDeviceRemoved(i))
-						printf("Device %llu Disconnected: \"%s\"\n", i, mkb_deviceName(i));
+			case mkb_DEVICE_CONNECT:
+				printf("Device %llu Connected: \"%s\"\n", i, mkb_deviceName(i));
+				break;
+
+			case mkb_DEVICE_RECONNECT:
+				printf("Device %llu Reconnected: \"%s\"\n", i, mkb_deviceName(i));
+				break;
+
+			case mkb_DEVICE_DISCONNECT:
+				printf("Device %llu Disconnected: \"%s\"\n", i, mkb_deviceName(i));
+				break;
 			}
 		}
 
