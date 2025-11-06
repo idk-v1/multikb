@@ -9,10 +9,10 @@ int main()
 	bool running = mkb_init();
 
 	printf("Devices: %llu\n", mkb_deviceConnectedCount());
-	for (int i = 0; i < mkb_deviceCount(); i++)
+	for (uint64_t i = 0; i < mkb_deviceCount(); i++)
 	{
 		if (mkb_deviceState(i))
-			printf("[%d]: \"%s\"\n", i, mkb_deviceName(i));
+			printf("Device %llu Connected: \"%s\"\n", i, mkb_deviceName(i));
 	}
 
 	while (running)
