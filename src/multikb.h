@@ -2,9 +2,6 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-#if (0) // bad visual studio
-}
-#endif
 
 #include <stdint.h>
 #include <stdbool.h>
@@ -411,34 +408,4 @@ void mkb_shutdown(void);
 
 #ifdef __cplusplus
 }
-
-class MultiKB
-{
-public:
-	MultiKB() { mkb_init(); }
-
-	uint8_t update() { return mkb_update(); }
-	uint8_t getLastEvent() { return mkb_getLastEvent(); }
-
-	uint64_t deviceCount() { return mkb_deviceCount(); }
-	uint64_t deviceConnectedCount() { return mkb_deviceConnectedCount(); }
-	uint64_t getLatestDevice() { return mkb_getLatestDevice(); }
-
-	uint64_t getNthDevice(uint64_t index) { return mkb_getNthDevice(index); }
-
-	const char* deviceName(uint64_t index) { return mkb_deviceName(index); }
-
-	bool keyState(uint64_t index, uint8_t key) { return mkb_keyState(index, key); }
-	bool keyLast(uint64_t index, uint8_t key) { return mkb_keyLast(index, key); }
-	bool keyDown(uint64_t index, uint8_t key) { return mkb_keyDown(index, key); }
-	bool keyUp(uint64_t index, uint8_t key) { return mkb_keyUp(index, key); }
-
-	bool capslockState() { return mkb_capslockState(); }
-	bool numlockState() { return mkb_numlockState(); }
-	bool scrolllockState() { return mkb_scrolllockState(); }
-
-	uint8_t lastKey(uint64_t index) { return mkb_lastKey(index); }
-
-	~MultiKB() { mkb_shutdown(); }
-};
 #endif
